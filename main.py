@@ -1,6 +1,6 @@
 """Локальный запуск одного парсера площадки — посмотреть, что собирается.
 
-Песочница: движок collector (src/collector) без Django. Хранилище здесь —
+Песочница: движок collector (пакет в корне репо) без Django. Хранилище здесь —
 простой CollectingSink, который копит лоты в память и пишет их в lots.json.
 В боевом проекте вместо него ORM-реализация, пишущая в Postgres.
 
@@ -18,8 +18,8 @@ import logging
 import sys
 from pathlib import Path
 
-# src/ на путь импорта, чтобы работал `import collector`.
-sys.path.insert(0, str(Path(__file__).parent / 'src'))
+# корень репо на путь импорта, чтобы работал `import collector`.
+sys.path.insert(0, str(Path(__file__).parent))
 
 from collector import ParserNotFound, get_parser, registry, run_parser  # noqa: E402
 from collector.core.storage.contracts import ChangeStatus  # noqa: E402
