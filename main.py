@@ -22,7 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
 from collector import ParserNotFound, get_parser, registry, run_parser  # noqa: E402
-from collector.contracts import ChangeStatus  # noqa: E402
+from collector.core.storage.contracts import ChangeStatus  # noqa: E402
 
 
 class CollectingSink:

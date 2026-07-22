@@ -18,17 +18,17 @@ from typing import Any
 import certifi
 from curl_cffi.requests import AsyncSession
 
-from collector.base import BaseParser, ParserContext
-from collector.fogsoft.base import TenderFogsoft
+from collector.core.spider import BaseParser, ParserContext
+from collector.sources.fogsoft.base import TenderFogsoft
 from collector.http.client import HttpClient
-from collector.http.hooks.inprotect import solve_inprotect
-from collector.http.hooks.logging import log_request, log_response
+from collector.sources.fogsoft.inprotect import solve_inprotect
+from collector.http.hooks import log_request, log_response
 from collector.http.middleware import Middleware
-from collector.sink import LotSink
+from collector.core.storage.sink import LotSink
 
 logger = logging.getLogger(__name__)
 
-_FOGSOFT_DIR = Path(__file__).parent / 'fogsoft'
+_FOGSOFT_DIR = Path(__file__).parent / 'sources' / 'fogsoft'
 
 
 @dataclass(slots=True)

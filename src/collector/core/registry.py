@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from collector.base import BaseParser
+from collector.core.spider import BaseParser
 
 _REGISTRY: dict[str, type[BaseParser]] = {}
 

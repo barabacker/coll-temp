@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collector.fogsoft.base import TenderFogsoft
-from collector.registry import register_parser
+from collector.sources.fogsoft.base import TenderFogsoft
+from collector.core.registry import register_parser
 
 
 @register_parser('centerr')

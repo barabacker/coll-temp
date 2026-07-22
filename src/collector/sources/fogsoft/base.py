@@ -7,20 +7,20 @@ from collections.abc import AsyncIterator
 from typing import Any, ClassVar
 from urllib.parse import urljoin
 
-from collector.base import BaseParser, Request, Response
-from collector.contracts import lot_fingerprint
-from collector.fogsoft.detail import (
+from collector.core.spider import BaseParser, Request, Response
+from collector.core.storage.contracts import lot_fingerprint
+from collector.sources.fogsoft.parsing.detail import (
     parse_attachments,
     parse_detail_sections,
     parse_price_schedule,
 )
-from collector.fogsoft.tables import (
+from collector.sources.fogsoft.parsing.tables import (
     ajax_headers,
     find_next_ctl,
     parse_table,
     read_max_pages,
 )
-from collector.fogsoft.viewstate import (
+from collector.sources.fogsoft.parsing.viewstate import (
     build_payload,
     extract_initial_tokens,
     extract_tokens,

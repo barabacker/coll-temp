@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any, Protocol
 
-from collector.contracts import ChangeStatus
+from collector.core.storage.contracts import ChangeStatus
 
 
 class LotSink(Protocol):

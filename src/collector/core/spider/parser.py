@@ -7,10 +7,10 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Callable
 from typing import Any, ClassVar
 
-from collector.base.context import ParserContext
-from collector.base.request import Request
-from collector.base.response import Response
-from collector.contracts import ChangeStatus
+from collector.core.spider.context import ParserContext
+from collector.core.spider.request import Request
+from collector.core.spider.response import Response
+from collector.core.storage.contracts import ChangeStatus
 
 
 class BaseParser(ABC):

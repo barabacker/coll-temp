@@ -6,7 +6,7 @@ from typing import Any
 
 from parsel import Selector
 
-from collector.base.request import Request
+from collector.core.spider.request import Request
 
 
 class Response:

@@ -1,19 +1,22 @@
-"""Pure functions to bypass the inprotect anti-bot (iTender/Fogsoft sites).
+"""inprotect anti-bot bypass for iTender (Fogsoft) sites: pure solver + hook.
 
 The site is behind a JS "inprotect" challenge: the first request returns HTTP
 429 with a small HTML page whose script collects a browser fingerprint and sets
-two cookies, then reloads.
-
-The challenge is purely client-side — the server only checks that the cookies
-``inprotect_ok_<id>`` and ``inprotect_fp_<id>`` are present; the nonce comes
-from the challenge page itself. So it is solvable over plain HTTP, no browser.
+two cookies, then reloads. The challenge is purely client-side — the server
+only checks that the cookies ``inprotect_ok_<id>`` and ``inprotect_fp_<id>`` are
+present; the nonce comes from the challenge page itself. So it is solvable over
+plain HTTP, no browser.
 """
 
 from __future__ import annotations
 
 import base64
 import json
+import logging
 import re
+from typing import Any
+
+logger = logging.getLogger(__name__)
 
 _NONCE_RE = re.compile(r'nonce\s*=\s*"([0-9a-f]+)"')
 _SITE_ID_RE = re.compile(r'inprotect_ok_(\d+)')
@@ -75,3 +78,27 @@ def build_cookies(html: str, user_agent: str | None = None) -> dict[str, str] | 
     payload = json.dumps(fp, separators=(',', ':'), ensure_ascii=False)
     b64 = base64.b64encode(payload.encode('utf-8')).decode('ascii')
     return {f'inprotect_ok_{site_id}': '1', f'inprotect_fp_{site_id}': b64}
+
+
+async def solve_inprotect(response: Any, *, session: Any, retry: Any) -> Any:
+    """Response hook: if the response is an inprotect challenge, set the pass
+    cookies and retry."""
+    if not looks_like_challenge(response.text, response.status_code):
+        return response
+
+    cookies = build_cookies(response.text)
+    if not cookies:
+        logger.warning(
+            'inprotect.unsolvable url=%s status=%s',
+            getattr(response, 'url', '?'),
+            response.status_code,
+        )
+        return response
+
+    for name, value in cookies.items():
+        session.cookies.set(name, value)
+    logger.info(
+        'inprotect.solved url=%s cookies=%s', getattr(response, 'url', '?'), sorted(cookies)
+    )
+
+    return await retry()
