@@ -10,3 +10,11 @@ dependencies = [
     "parsel>=1.11.0",
     "tenacity>=9.1.4",
 ]
+
+[dependency-groups]
+dev = ["pytest", "pytest-asyncio"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+testpaths = ["tests"]
