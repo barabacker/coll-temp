@@ -11,3 +11,6 @@ wheels/
 
 # Run output
 lots.json
+
+# Worker output (scraped data dumps)
+data/
