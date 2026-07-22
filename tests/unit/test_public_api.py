@@ -10,6 +10,7 @@ EXPECTED_KEYS = {
     'utp_lot', 'tender_one', 'etpugra', 'tendergarant', 'yuzhnyy_etp',
     'meta_invest', 'gloria_service', 'zakazrf', 'etb',
     'trade_alliance', 'seltim', 'electro_torgi', 'torgi82', 'vetp',
+    'atctrade', 'ausib', 'etp_profit', 'aukcioncenter', 'regtorg', 'ptp_center',
 }
 
 

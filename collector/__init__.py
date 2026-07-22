@@ -13,6 +13,7 @@ from collector.core.spider import BaseParser, ParserContext, Request, Response
 # Side-effect import: registers every Fogsoft platform parser.
 from collector.sources.fogsoft import platforms as _fogsoft_platforms  # noqa: E402,F401
 from collector.sources.kendo import platforms as _kendo_platforms  # noqa: E402,F401
+from collector.sources.btorg import platforms as _btorg_platforms  # noqa: E402,F401
 from collector.core.registry import ParserNotFound, get_parser, register_parser, registry
 from collector.runner import CrawlResult, run_parser
 from collector.core.storage.sink import LotSink
