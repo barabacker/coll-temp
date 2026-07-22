@@ -1,7 +1,8 @@
 """Parse a Kendo-ETP trade detail page (/{type}/{id}).
 
 One server-rendered page holds all tabs. Lots live in ``div#lots`` as repeated
-``a.block-lot`` blocks (each: lot link, "Номер лота", "Статус лота", price in
+``.block-lot`` blocks (an ``<a>`` or ``<div>`` depending on the site; each: lot
+link with ``/lots/`` in its href, "Номер лота", "Статус лота", price in
 ``span.fs36``). Trade-level key/value fields live in ``div#main-info`` as
 ``div.table_row`` label/value pairs; documents in ``div#documents``.
 """
@@ -47,8 +48,8 @@ def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, o
     """
     trade_id = trade.get('trade_id')
     items: list[dict[str, object]] = []
-    for block in selector.xpath('//div[@id="lots"]//a[contains(@class, "block-lot")]'):
-        link = block.xpath('.//a[contains(@class, "blue-text")][@href][1]')
+    for block in selector.xpath('//div[@id="lots"]//*[contains(@class, "block-lot")]'):
+        link = block.xpath('.//a[contains(@href, "/lots/")][1]')
         lot_num = _clean(block.xpath('.//span[contains(@class, "black-text")]/text()').get())
         price_raw = _clean(block.xpath('string(.//span[contains(@class, "fs36")])').get())
         items.append(

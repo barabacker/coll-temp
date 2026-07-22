@@ -1,8 +1,10 @@
 """TenderKendo — base parser for Kendo-ETP bankruptcy-auction sites.
 
-A subclass sets ``name`` (registry key) and ``DOMAIN``. The listing lists
-*trades*; ``parse`` enqueues a detail dive per trade, and ``parse_detail``
-expands each trade into one item per lot (matching the lot-centric LotSink).
+A subclass sets ``name`` (registry key) and ``DOMAIN``. ``parse`` reads the
+listing as a de-duplicated set of trade detail URLs and enqueues a dive per
+trade; ``parse_detail`` reads authoritative trade-level fields from the detail
+page and expands the trade into one item per lot (lot-centric LotSink). This
+absorbs the two listing card templates (per-trade and per-lot) uniformly.
 """
 
 from __future__ import annotations
@@ -65,7 +67,13 @@ class TenderKendo(BaseParser):
         main = parse_main_info(sel)
         docs = parse_documents(sel)
         organizer = main.get('Наименование')
-        lots = parse_lots(sel, trade)
+        # Trade-level fingerprint fields come from the authoritative detail page,
+        # not the listing card (which is lot-level on the per-lot template).
+        trade_ctx = dict(trade)
+        trade_ctx['trade_title'] = main.get('Номер торгов') or trade.get('trade_title')
+        trade_ctx['bidding_date'] = main.get('Окончание приема заявок') or trade.get('bidding_date')
+        trade_ctx['event_date'] = main.get('Подведение результатов торгов') or trade.get('event_date')
+        lots = parse_lots(sel, trade_ctx)
         await self.log(
             f'{response.request.method} | {response.status} '
             f'| detail trade={trade.get("trade_id")} | lots={len(lots)}'
