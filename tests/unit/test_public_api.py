@@ -9,6 +9,7 @@ EXPECTED_KEYS = {
     'centerr', 'alfalot', 'etpu_bankrupt', 'bep', 'arbbitlot', 'arbitat',
     'utp_lot', 'tender_one', 'etpugra', 'tendergarant', 'yuzhnyy_etp',
     'meta_invest', 'gloria_service', 'zakazrf', 'etb',
+    'trade_alliance', 'seltim', 'electro_torgi', 'torgi82', 'vetp',
 }
 
 
