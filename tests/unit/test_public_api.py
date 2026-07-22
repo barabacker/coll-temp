@@ -11,6 +11,7 @@ EXPECTED_KEYS = {
     'meta_invest', 'gloria_service', 'zakazrf', 'etb',
     'trade_alliance', 'seltim', 'electro_torgi', 'torgi82', 'vetp',
     'atctrade', 'ausib', 'etp_profit', 'aukcioncenter', 'regtorg', 'ptp_center',
+    'nistp', 'el_torg', 'rus_on', 'sistematorg', 'promkonsalt',
 }
 
 
