@@ -6,9 +6,9 @@ from __future__ import annotations
 import collector
 
 EXPECTED_KEYS = {
-    'centerr', 'alfalot', 'etpu_bankrupt', 'bep', 'arbbitlot', 'arbitat',
-    'utp_lot', 'tender_one', 'etpugra', 'tendergarant', 'yuzhnyy_etp',
-    'meta_invest', 'gloria_service', 'zakazrf', 'etb',
+    'centerr', 'utender', 'alfalot', 'etpu_bankrupt', 'bep', 'arbbitlot',
+    'arbitat', 'utp_lot', 'tender_one', 'etpugra', 'tendergarant',
+    'yuzhnyy_etp', 'meta_invest', 'gloria_service', 'zakazrf', 'etb',
 }
 
 

@@ -14,14 +14,12 @@ class CenterrParser(TenderFogsoft):
     DOMAIN = 'https://bankrupt.centerr.ru'
 
 
-# TODO(utender): disabled — pagination does not advance, the job re-downloads
-# page 1 (see the old "utender-pagination-debt" note). Re-enable after the fix.
-# @register_parser("utender")
-# class UTenderParser(TenderFogsoft):
-#     """uTender — utender.ru."""
-#
-#     name = "utender"
-#     DOMAIN = "http://utender.ru"
+@register_parser("utender")
+class UTenderParser(TenderFogsoft):
+    """uTender — utender.ru."""
+
+    name = "utender"
+    DOMAIN = "http://utender.ru"
 
 
 @register_parser('alfalot')
