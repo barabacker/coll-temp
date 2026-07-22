@@ -4,11 +4,12 @@ ASP.NET WebForms + UpdatePanel, ViewState pagination, lot listing."""
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urljoin
 
 from collector.core.spider import BaseParser, Request, Response
 from collector.core.storage.contracts import lot_fingerprint
+from collector.sources.fogsoft.inprotect import solve_inprotect
 from collector.sources.fogsoft.parsing.detail import (
     parse_attachments,
     parse_detail_sections,
@@ -25,6 +26,9 @@ from collector.sources.fogsoft.parsing.viewstate import (
     extract_initial_tokens,
     extract_tokens,
 )
+
+if TYPE_CHECKING:
+    from collector.http.middleware import ResponseHook
 
 
 class TenderFogsoft(BaseParser):
@@ -50,6 +54,7 @@ class TenderFogsoft(BaseParser):
     # no CA bundle can fix it (see ArbBitLotParser). Disables MITM protection
     # for requests to this site.
     SKIP_TLS_VERIFY: ClassVar[bool] = False
+    RESPONSE_HOOKS: ClassVar[tuple[ResponseHook, ...]] = (solve_inprotect,)
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)

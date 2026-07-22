@@ -5,12 +5,15 @@ from __future__ import annotations
 import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Callable
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from collector.core.spider.context import ParserContext
 from collector.core.spider.request import Request
 from collector.core.spider.response import Response
 from collector.core.storage.contracts import ChangeStatus
+
+if TYPE_CHECKING:
+    from collector.http.middleware import ResponseHook
 
 
 class BaseParser(ABC):
@@ -24,6 +27,9 @@ class BaseParser(ABC):
     name: ClassVar[str]
     start_urls: ClassVar[list[str]] = []
     concurrency: ClassVar[int] = 1
+    EXTRA_CA_CERT: ClassVar[str | None] = None
+    SKIP_TLS_VERIFY: ClassVar[bool] = False
+    RESPONSE_HOOKS: ClassVar[tuple[ResponseHook, ...]] = ()
 
     def __init__(self, ctx: ParserContext) -> None:
         self.ctx = ctx
