@@ -8,7 +8,7 @@ from typing import Any
 
 from collector.core.spider import ParserContext
 from collector.core.storage.contracts import ChangeStatus
-from collector.sources.ruson.platforms import NistpParser
+from collector.core.registry import get_parser
 
 FIX = Path(__file__).parents[1] / 'fixtures' / 'ruson'
 LISTING = (FIX / 'nistp_listing.html').read_text(encoding='utf-8')
@@ -53,7 +53,7 @@ def test_ruson_crawl_expands_trades_into_lots():
     sink = _Sink()
     http = _FakeHttp()
     ctx = ParserContext(http=http, params={'max_pages': '1'}, lot_sink=sink)
-    parser = NistpParser(ctx)
+    parser = get_parser('nistp')(ctx)
 
     total = asyncio.run(parser.crawl())
 
@@ -78,7 +78,7 @@ def test_ruson_crawl_dedupes_trades_across_pages():
     sink = _Sink()
     http = _FakeHttp()  # serves the same LISTING for every trade_list URL
     ctx = ParserContext(http=http, params={'max_pages': '2'}, lot_sink=sink)
-    parser = NistpParser(ctx)
+    parser = get_parser('nistp')(ctx)
 
     asyncio.run(parser.crawl())
 

@@ -8,7 +8,7 @@ from typing import Any
 
 from collector.core.spider import ParserContext
 from collector.core.storage.contracts import ChangeStatus
-from collector.sources.kendo.platforms import TradeAllianceParser
+from collector.core.registry import get_parser
 
 FIX = Path(__file__).parents[1] / 'fixtures' / 'kendo'
 LISTING = (FIX / 'listing_page1.html').read_text(encoding='utf-8')
@@ -53,7 +53,7 @@ def test_kendo_crawl_expands_trades_into_lots():
     sink = _Sink()
     http = _FakeHttp()
     ctx = ParserContext(http=http, params={'max_pages': '1'}, lot_sink=sink)
-    parser = TradeAllianceParser(ctx)
+    parser = get_parser('trade_alliance')(ctx)
 
     total = asyncio.run(parser.crawl())
 

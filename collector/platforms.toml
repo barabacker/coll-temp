@@ -1,0 +1,230 @@
+# Platform registry — the source of truth for which sites are parsed.
+#
+# Each [[platform]] becomes a registered parser class, built by
+# collector/platforms.py on import. Fields:
+#   key            registry key (used by get_parser / worker / CLI)   [required]
+#   engine         fogsoft | kendo | btorg | ruson                    [required]
+#   domain         site root, no trailing slash                       [required]
+#   title          human label (becomes the class docstring)          [optional]
+#   listing_path   overrides the engine's default listing path        [optional]
+#   extra_ca_cert  PEM path relative to the engine package (TLS quirk)[optional]
+#   skip_tls_verify  disable TLS verification (broken cert on their side) [optional]
+#   enabled        false keeps the entry documented but unregistered  [optional]
+#   note           why it is disabled / anything worth remembering    [optional]
+
+# ── iTender / Fogsoft ────────────────────────────────────────────────────────
+
+[[platform]]
+key = "centerr"
+engine = "fogsoft"
+title = "Центр реализации"
+domain = "https://bankrupt.centerr.ru"
+
+[[platform]]
+key = "utender"
+engine = "fogsoft"
+title = "uTender"
+domain = "http://utender.ru"
+enabled = false
+note = "Пагинация не двигается — перекачивает page 1 (проверено вживую 2026-07-22). Включить после фикса."
+
+[[platform]]
+key = "alfalot"
+engine = "fogsoft"
+title = "АЛЬФАЛОТ"
+domain = "https://bankrupt.alfalot.ru"
+
+[[platform]]
+key = "etpu_bankrupt"
+engine = "fogsoft"
+title = "Уральская электронная торговая площадка"
+domain = "https://bankrupt.etpu.ru"
+
+[[platform]]
+key = "bep"
+engine = "fogsoft"
+title = "Балтийская электронная площадка"
+domain = "https://bankruptcy.bepspb.ru"
+
+[[platform]]
+key = "arbbitlot"
+engine = "fogsoft"
+title = "АРБбитЛот"
+domain = "https://torgi.arbbitlot.ru"
+skip_tls_verify = true
+note = "Сертификат сайта просрочен на их стороне — CA-бандл не помогает. Отключает защиту от MITM для этого сайта."
+
+[[platform]]
+key = "arbitat"
+engine = "fogsoft"
+title = "Арбитат"
+domain = "http://arbitat.ru"
+
+[[platform]]
+key = "utp_lot"
+engine = "fogsoft"
+title = "Объединённая торговая площадка"
+domain = "https://bankrupt.utpl.ru"
+
+[[platform]]
+key = "tender_one"
+engine = "fogsoft"
+title = "Tender Technologies"
+domain = "https://bankrupt.tender.one"
+
+[[platform]]
+key = "etpugra"
+engine = "fogsoft"
+title = "ЭТП Югра"
+domain = "https://etpugra.ru"
+
+[[platform]]
+key = "tendergarant"
+engine = "fogsoft"
+title = "ТЕНДЕР ГАРАНТ"
+domain = "https://tendergarant.com"
+
+[[platform]]
+key = "yuzhnyy_etp"
+engine = "fogsoft"
+title = "ЮЭТП"
+domain = "https://torgibankrot.ru"
+
+[[platform]]
+key = "meta_invest"
+engine = "fogsoft"
+title = "МЕТА-ИНВЕСТ"
+domain = "https://meta-invest.ru"
+extra_ca_cert = "certs/meta_invest_globalsign_gcc_r3_dv_tls_ca_2020.pem"
+note = "Сервер не отдаёт промежуточный сертификат цепочки — подставляем свой."
+
+[[platform]]
+key = "property_trade"
+engine = "fogsoft"
+title = "Property Trade"
+domain = "https://propertytrade.ru"
+enabled = false
+note = "Было закомментировано в коде без указания причины — проверить и включить."
+
+[[platform]]
+key = "gloria_service"
+engine = "fogsoft"
+title = "ЭТП Регион (GloriaService)"
+domain = "https://gloriaservice.ru"
+
+[[platform]]
+key = "zakazrf"
+engine = "fogsoft"
+title = "ЭТП Заказ РФ"
+domain = "http://bankrot.zakazrf.ru"
+
+[[platform]]
+key = "etb"
+engine = "fogsoft"
+title = "ЕЭТП / ets24.ru"
+domain = "http://bankrupt.ets24.ru"
+
+# ── Kendo-ETP ────────────────────────────────────────────────────────────────
+
+[[platform]]
+key = "trade_alliance"
+engine = "kendo"
+title = "Альянс Трэйд"
+domain = "https://trade-alliance.ru"
+
+[[platform]]
+key = "seltim"
+engine = "kendo"
+title = "Селтим"
+domain = "https://bankrupt.seltim.ru"
+
+[[platform]]
+key = "electro_torgi"
+engine = "kendo"
+title = "Электро-Торги"
+domain = "https://bankrotstvo.electro-torgi.ru"
+
+[[platform]]
+key = "torgi82"
+engine = "kendo"
+title = "Торги82"
+domain = "https://lot.torgi82.ru"
+
+[[platform]]
+key = "vetp"
+engine = "kendo"
+title = "ВЭТП"
+domain = "https://банкрот.вэтп.рф"
+note = "IDN-домен, хранится в Unicode — curl_cffi кодирует в punycode сам."
+
+# ── btorg / edoc-ETP ─────────────────────────────────────────────────────────
+
+[[platform]]
+key = "atctrade"
+engine = "btorg"
+title = "Аукционный тендерный центр"
+domain = "https://atctrade.ru"
+
+[[platform]]
+key = "ausib"
+engine = "btorg"
+title = "Аукционы Сибири"
+domain = "https://ausib.ru"
+
+[[platform]]
+key = "etp_profit"
+engine = "btorg"
+title = "ЭТП Профит"
+domain = "https://etp-profit.ru"
+
+[[platform]]
+key = "aukcioncenter"
+engine = "btorg"
+title = "Аукционный центр"
+domain = "https://aukcioncenter.ru"
+
+[[platform]]
+key = "regtorg"
+engine = "btorg"
+title = "Региональная торговая площадка"
+domain = "https://regtorg.com"
+
+[[platform]]
+key = "ptp_center"
+engine = "btorg"
+title = "ПТП-Центр"
+domain = "https://ptp-center.ru"
+
+# ── rus-on ───────────────────────────────────────────────────────────────────
+
+[[platform]]
+key = "nistp"
+engine = "ruson"
+title = "Новые информационные сервисы"
+domain = "https://nistp.ru"
+
+[[platform]]
+key = "el_torg"
+engine = "ruson"
+title = "Электронные торги"
+domain = "https://el-torg.com"
+
+[[platform]]
+key = "rus_on"
+engine = "ruson"
+title = "РОССИЯ ОнЛайн"
+domain = "https://rus-on.ru"
+
+[[platform]]
+key = "sistematorg"
+engine = "ruson"
+title = "Объединённые системы торгов"
+domain = "https://sistematorg.com"
+listing_path = "tradelist.php"
+
+[[platform]]
+key = "promkonsalt"
+engine = "ruson"
+title = "Промконсалт"
+domain = "https://promkonsalt.ru"
+listing_path = "tradelist.php"

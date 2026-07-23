@@ -6,13 +6,14 @@ from typing import Any
 
 import pytest
 
+from collector.core.registry import get_parser
 from collector.core.spider import BaseParser
 from collector.sources.fogsoft.inprotect import solve_inprotect
-from collector.sources.fogsoft.platforms import (
-    ArbBitLotParser,
-    CenterrParser,
-    MetaInvestParser,
-)
+
+# Parser classes are built from platforms.toml and reached via the registry.
+ArbBitLotParser = get_parser('arbbitlot')
+CenterrParser = get_parser('centerr')
+MetaInvestParser = get_parser('meta_invest')
 
 
 class _Bare(BaseParser):
