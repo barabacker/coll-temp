@@ -14,7 +14,7 @@ import re
 
 from parsel import Selector
 
-from collector.core.parsing import clean, parse_price, read_max_pages
+from collector.core.parsing import clean, parse_price, pick_status, read_max_pages
 
 __all__ = ['clean', 'find_next_page', 'parse_listing', 'parse_price', 'read_max_pages']
 
@@ -53,6 +53,10 @@ def parse_listing(selector: Selector, source: str) -> list[dict[str, object]]:
             continue
         seen.add(trade_nid)
         code = _CODE_RE.search(clean(row.xpath('string(.)').get()) or '')
+        # The "Состояние" column sits at a different index per site, so pick the
+        # cell that reads like a status. Used only to stop paging past the
+        # archive; the authoritative status comes from the detail page.
+        status = pick_status([cell.xpath('string(.)').get() for cell in row.xpath('./td')])
         trades.append(
             {
                 'trade_nid': trade_nid,
@@ -60,6 +64,7 @@ def parse_listing(selector: Selector, source: str) -> list[dict[str, object]]:
                 'trade_number': code.group(0) if code else None,
                 'trade_type': clean(code.group(0).split('-')[1]) if code else None,
                 'detail_url': ref,
+                'status': status,
                 '_source': source,
             }
         )

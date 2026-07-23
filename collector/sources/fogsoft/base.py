@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urljoin
 
+from collector.core.parsing import is_active_status, read_only_active
 from collector.core.spider import BaseParser, Request, Response
 from collector.core.storage.contracts import lot_fingerprint
 from collector.sources.fogsoft.inprotect import solve_inprotect
@@ -91,6 +92,15 @@ class TenderFogsoft(BaseParser):
                 )
             else:
                 yield item
+
+        # Listings are ordered newest-first, so once a page holds nothing live
+        # the deeper pages are older still — stop instead of scraping archive.
+        if read_only_active(self.ctx.params) and not any(
+            is_active_status(str(row.get('status')) if row.get('status') else None)
+            for row in items
+        ):
+            await self.log(f'page={page}: нет актуальных лотов — останавливаю пагинацию')
+            return
 
         if page == 1:
             cviewstate, eventvalidation = extract_initial_tokens(response.text)

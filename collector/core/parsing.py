@@ -25,6 +25,41 @@ def clean(value: str | None) -> str | None:
     return cleaned or None
 
 
+# Statuses that mean the trade is over. Anything else (including an unknown or
+# missing status) counts as live — we never cut a crawl short on doubt.
+_FINISHED_MARKERS = (
+    'завершен', 'завершён', 'состоял', 'отменен', 'отменён',
+    'приостановлен', 'аннулирован', 'признан',
+)
+# Words that make a short cell recognisable as a status at all.
+_STATUS_HINTS = (*_FINISHED_MARKERS, 'объявлен', 'прием', 'приём', 'утверждени')
+
+
+def is_active_status(status: str | None) -> bool:
+    """Is a trade still live? Unknown/empty statuses count as live."""
+    if not status:
+        return True
+    lowered = status.lower()
+    return not any(marker in lowered for marker in _FINISHED_MARKERS)
+
+
+def pick_status(texts: list[str | None]) -> str | None:
+    """First short text that reads like a trade status (listing status cell)."""
+    for text in texts:
+        cleaned = clean(text)
+        if cleaned and len(cleaned) < 40 and any(h in cleaned.lower() for h in _STATUS_HINTS):
+            return cleaned
+    return None
+
+
+def read_only_active(params: dict[str, str]) -> bool:
+    """Stop paging once a listing page holds no live trades (default: on)."""
+    raw = params.get('only_active')
+    if raw is None or raw == '':
+        return True
+    return raw.strip().lower() not in ('0', 'false', 'no', 'off')
+
+
 def read_max_pages(params: dict[str, str]) -> int | None:
     """Read ``max_pages`` from job params. None means no limit."""
     raw = params.get('max_pages')

@@ -16,7 +16,7 @@ from collections.abc import AsyncIterator
 from typing import Any, ClassVar
 from urllib.parse import urljoin
 
-from collector.core.parsing import read_max_pages
+from collector.core.parsing import is_active_status, read_max_pages, read_only_active
 from collector.core.spider.parser import BaseParser
 from collector.core.spider.request import Request
 from collector.core.spider.response import Response
@@ -90,6 +90,14 @@ class DiveParser(BaseParser):
                 metadata={'trade': trade},
                 headers=self.DIVE_HEADERS,
             )
+
+        # Listings are ordered newest-first, so once a page holds nothing live
+        # the deeper pages are older still — stop instead of scraping archive.
+        if read_only_active(self.ctx.params) and not any(
+            is_active_status(str(t.get('status')) if t.get('status') else None) for t in trades
+        ):
+            await self.log(f'page={page}: нет актуальных лотов — останавливаю пагинацию')
+            return
 
         next_page = self.next_page(sel, page)
         max_pages = read_max_pages(self.ctx.params)

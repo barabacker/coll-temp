@@ -107,6 +107,12 @@ def main() -> None:
     parser.add_argument('keys', nargs='*', help='parser keys to run (default: all)')
     parser.add_argument('--engine', help='run only keys from this engine (kendo, btorg, ruson, fogsoft)')
     parser.add_argument('--max-pages', type=int, default=None, help='cap listing pages per site (default: all)')
+    parser.add_argument(
+        '--all-lots',
+        action='store_true',
+        help='keep paging into the archive; by default paging stops at the first '
+        'listing page with no live trades (finished/cancelled only)',
+    )
     parser.add_argument('--concurrency', type=int, default=4, help='sites scraped in parallel (default: 4)')
     parser.add_argument('--out', default='data', help='output directory (default: data)')
     parser.add_argument('--list', action='store_true', help='list available keys and exit')
@@ -138,9 +144,15 @@ def main() -> None:
     params: dict[str, str] = {}
     if args.max_pages is not None:
         params['max_pages'] = str(args.max_pages)
+    if args.all_lots:
+        params['only_active'] = '0'
 
     out_dir = Path(args.out)
-    print(f'=== running {len(keys)} site(s), max_pages={args.max_pages}, concurrency={args.concurrency} ===')
+    scope = 'all lots (incl. archive)' if args.all_lots else 'live lots only'
+    print(
+        f'=== running {len(keys)} site(s), {scope}, '
+        f'max_pages={args.max_pages}, concurrency={args.concurrency} ==='
+    )
     started = time.monotonic()
     results = asyncio.run(_run_all(keys, params, out_dir, args.concurrency))
     elapsed = time.monotonic() - started

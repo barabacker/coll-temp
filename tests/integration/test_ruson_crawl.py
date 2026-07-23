@@ -70,6 +70,28 @@ def test_ruson_crawl_expands_trades_into_lots():
     assert first['detail']
 
 
+def test_ruson_crawl_stops_when_page_has_no_live_trades():
+    """Paging stops at the first listing page holding only finished trades."""
+
+    class _ArchiveHttp(_FakeHttp):
+        async def request(self, method: str, url: str, **kwargs: Any) -> _Raw:
+            raw = await super().request(method, url, **kwargs)
+            if 'trade_view.php' not in url:
+                return _Raw(raw.text.replace('Торги объявлены', 'Торги завершены'))
+            return raw
+
+    sink = _Sink()
+    http = _ArchiveHttp()
+    ctx = ParserContext(http=http, params={'max_pages': '5'}, lot_sink=sink)
+    parser = get_parser('nistp')(ctx)
+
+    asyncio.run(parser.crawl())
+
+    # page 1 is still dived (its trades are collected), but no page 2 is fetched
+    assert any('trade_view.php' in c for c in http.calls)
+    assert not any('pagenum=' in c for c in http.calls)
+
+
 def test_ruson_crawl_dedupes_trades_across_pages():
     """The same listing served on pages 1 and 2 must dive each trade once.
 
