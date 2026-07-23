@@ -10,57 +10,18 @@ trade/lot fields are then read from the (uniform) detail page.
 
 from __future__ import annotations
 
-import logging
 import re
 
 from parsel import Selector
 
-logger = logging.getLogger(__name__)
+from collector.core.parsing import clean, parse_price, read_max_pages
 
-_WS_RE = re.compile(r'\s+')
+__all__ = ['clean', 'find_next_page', 'parse_listing', 'parse_price', 'read_max_pages']
+
 _NID_RE = re.compile(r'trade_view\.php\?trade_nid=(\d+)')
 _REF_RE = re.compile(r"(/?[^'\"\s]*trade_view\.php\?trade_nid=\d+)")
 _CODE_RE = re.compile(r'(\d+)-[А-Я]{2,}')
 _PAGENUM_RE = re.compile(r'pagenum_send\((\d+)\)')
-_PRICE_HEAD_RE = re.compile(r'[\d\s\xa0.,]+')
-
-
-def clean(value: str | None) -> str | None:
-    """Collapse whitespace to single spaces. None for empty."""
-    if value is None:
-        return None
-    cleaned = _WS_RE.sub(' ', value).strip()
-    return cleaned or None
-
-
-def read_max_pages(params: dict[str, str]) -> int | None:
-    """Read ``max_pages`` from job params. None means no limit."""
-    raw = params.get('max_pages')
-    if raw is None or raw == '':
-        return None
-    try:
-        value = int(raw)
-    except (ValueError, TypeError):
-        logger.warning('ruson.bad_max_pages value=%s', raw)
-        return None
-    return value if value > 0 else None
-
-
-def parse_price(value: str | None) -> float | None:
-    """Parse "1 315 000.00" → 1315000.0 (space thousands, dot/comma decimal)."""
-    if value is None:
-        return None
-    m = _PRICE_HEAD_RE.match(value)
-    if not m:
-        return None
-    raw = m.group(0).replace('\xa0', '').replace(' ', '').replace(',', '.').strip().rstrip('.')
-    if not raw:
-        return None
-    try:
-        return float(raw)
-    except ValueError:
-        logger.warning('ruson.bad_price value=%s', value)
-        return None
 
 
 def parse_listing(selector: Selector, source: str) -> list[dict[str, object]]:

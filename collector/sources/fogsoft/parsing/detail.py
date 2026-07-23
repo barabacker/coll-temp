@@ -14,19 +14,9 @@ parse_detail_sections).
 
 from __future__ import annotations
 
-import re
-
 from parsel import Selector
 
-_WS_RE = re.compile(r'\s+')
-
-
-def _clean(value: str | None) -> str | None:
-    """Collapse whitespace/newlines to a single space. None for empty string."""
-    if value is None:
-        return None
-    cleaned = _WS_RE.sub(' ', value).strip()
-    return cleaned or None
+from collector.core.parsing import clean as _clean
 
 
 def parse_detail_sections(selector: Selector) -> dict[str, dict[str, str]]:

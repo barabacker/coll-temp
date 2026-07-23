@@ -8,40 +8,19 @@ trade id, so both templates reduce to the same set of trades to dive into.
 
 from __future__ import annotations
 
-import logging
 import re
 
 from parsel import Selector
 
-logger = logging.getLogger(__name__)
+from collector.core.parsing import clean, read_max_pages
 
-_WS_RE = re.compile(r'\s+')
+__all__ = ['clean', 'find_next_page', 'parse_listing', 'read_max_pages']
+
 _PAGE_RE = re.compile(r'page=(\d+)')
 _DIGITS_RE = re.compile(r'\d+')
 # "10775–ОАОФ" / "37-ОАОФ": digits then an en-dash or hyphen. Distinguishes the
 # trade-number bold from the title bold within a card.
 _NUMBER_RE = re.compile(r'^\d+\s*[–-]')
-
-
-def clean(value: str | None) -> str | None:
-    """Collapse whitespace to single spaces. None for empty."""
-    if value is None:
-        return None
-    cleaned = _WS_RE.sub(' ', value).strip()
-    return cleaned or None
-
-
-def read_max_pages(params: dict[str, str]) -> int | None:
-    """Read ``max_pages`` from job params. None means no limit."""
-    raw = params.get('max_pages')
-    if raw is None or raw == '':
-        return None
-    try:
-        value = int(raw)
-    except (ValueError, TypeError):
-        logger.warning('kendo.bad_max_pages value=%s', raw)
-        return None
-    return value if value > 0 else None
 
 
 def _date_by_title(card: Selector, title: str) -> str | None:

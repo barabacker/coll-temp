@@ -9,35 +9,12 @@ link with ``/lots/`` in its href, "Номер лота", "Статус лота"
 
 from __future__ import annotations
 
-import logging
-import re
-
 from parsel import Selector
 
-logger = logging.getLogger(__name__)
+from collector.core.parsing import clean as _clean
+from collector.core.parsing import parse_price
 
-_WS_RE = re.compile(r'\s+')
-
-
-def _clean(value: str | None) -> str | None:
-    if value is None:
-        return None
-    cleaned = _WS_RE.sub(' ', value).strip()
-    return cleaned or None
-
-
-def parse_price(value: str | None) -> float | None:
-    """Parse "6 721 200.00" → 6721200.0. Space = thousands, dot/comma = decimal."""
-    if value is None:
-        return None
-    raw = value.replace('\xa0', '').replace(' ', '').replace(',', '.')
-    if not raw:
-        return None
-    try:
-        return float(raw)
-    except ValueError:
-        logger.warning('kendo.detail.bad_price value=%s', value)
-        return None
+__all__ = ['parse_documents', 'parse_lots', 'parse_main_info', 'parse_price']
 
 
 def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, object]]:

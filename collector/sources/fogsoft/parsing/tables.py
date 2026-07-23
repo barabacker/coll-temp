@@ -2,52 +2,19 @@
 
 from __future__ import annotations
 
-import logging
 import re
 from urllib.parse import urlparse
 
 from parsel import Selector
 
-logger = logging.getLogger(__name__)
+from collector.core.parsing import clean, parse_price, read_max_pages
 
 _NEXT_BLOCK_LABEL = '>>'
 _CTL_RE = re.compile(r'ctl\d+')
-_WS_RE = re.compile(r'\s+')
 
-
-def clean(value: str | None) -> str | None:
-    """Collapse whitespace/newlines to a single space. None for empty string."""
-    if value is None:
-        return None
-    cleaned = _WS_RE.sub(' ', value).strip()
-    return cleaned or None
-
-
-def parse_price(value: str | None) -> float | None:
-    """Parse a price like "270 000,00" → 270000.0. None if unrecognised."""
-    if value is None:
-        return None
-    raw = value.replace('\xa0', '').replace(' ', '').replace(',', '.')
-    if not raw:
-        return None
-    try:
-        return float(raw)
-    except ValueError:
-        logger.warning('centerr.bad_price value=%s', value)
-        return None
-
-
-def read_max_pages(params: dict[str, str]) -> int | None:
-    """Read ``max_pages`` from job params. None means no limit."""
-    raw = params.get('max_pages')
-    if raw is None or raw == '':
-        return None
-    try:
-        value = int(raw)
-    except (ValueError, TypeError):
-        logger.warning('centerr.bad_max_pages value=%s', raw)
-        return None
-    return value if value > 0 else None
+__all__ = [
+    'ajax_headers', 'clean', 'find_next_ctl', 'parse_price', 'parse_table', 'read_max_pages'
+]
 
 
 def ajax_headers(base_url: str) -> dict[str, str]:
