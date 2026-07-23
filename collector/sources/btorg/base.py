@@ -28,6 +28,12 @@ class TenderBtorg(BaseParser):
     LISTING_PATH: ClassVar[str] = 'etp/trade/list.html'
     BASE_URL: ClassVar[str]
 
+    def __init__(self, ctx: Any) -> None:
+        super().__init__(ctx)
+        # De-duplicate trades across the whole crawl (a trade can reappear on a
+        # later listing page); dive and emit each only once.
+        self._seen_trades: set[object] = set()
+
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         if 'DOMAIN' in cls.__dict__:
@@ -42,15 +48,19 @@ class TenderBtorg(BaseParser):
             f'{response.request.method} | {response.status} | page={page} '
             f'| trades={len(trades)}'
         )
+        seen = self._seen_trades
         for trade in trades:
             lots_url = trade.get('lots_url')
-            if lots_url:
-                yield self.request(
-                    urljoin(response.request.url, str(lots_url)),
-                    callback=self.parse_lots_page,
-                    metadata={'trade': trade},
-                    headers={'X-Requested-With': 'XMLHttpRequest'},
-                )
+            pid = trade.get('purchase_id')
+            if not lots_url or pid in seen:
+                continue
+            seen.add(pid)
+            yield self.request(
+                urljoin(response.request.url, str(lots_url)),
+                callback=self.parse_lots_page,
+                metadata={'trade': trade},
+                headers={'X-Requested-With': 'XMLHttpRequest'},
+            )
 
         next_page = find_next_page(sel, page)
         max_pages = read_max_pages(self.ctx.params)
@@ -66,4 +76,5 @@ class TenderBtorg(BaseParser):
             f'| lots trade={trade.get("trade_id")} | lots={len(lots)}'
         )
         for item in lots:
-            yield item
+            if item.get('lot_id'):
+                yield item

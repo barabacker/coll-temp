@@ -33,6 +33,12 @@ class TenderKendo(BaseParser):
     LISTING_PATH: ClassVar[str] = 'lots'
     BASE_URL: ClassVar[str]
 
+    def __init__(self, ctx: Any) -> None:
+        super().__init__(ctx)
+        # De-duplicate trades across the whole crawl (a trade can reappear on a
+        # later listing page, esp. the per-lot card template); dive once.
+        self._seen_trades: set[object] = set()
+
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         if 'DOMAIN' in cls.__dict__:
@@ -47,14 +53,18 @@ class TenderKendo(BaseParser):
             f'{response.request.method} | {response.status} | page={page} '
             f'| trades={len(trades)}'
         )
+        seen = self._seen_trades
         for trade in trades:
             detail_url = trade.get('detail_url')
-            if detail_url:
-                yield self.request(
-                    urljoin(response.request.url, str(detail_url)),
-                    callback=self.parse_detail,
-                    metadata={'trade': trade},
-                )
+            tid = trade.get('trade_id')
+            if not detail_url or tid in seen:
+                continue
+            seen.add(tid)
+            yield self.request(
+                urljoin(response.request.url, str(detail_url)),
+                callback=self.parse_detail,
+                metadata={'trade': trade},
+            )
 
         next_page = find_next_page(sel, page)
         max_pages = read_max_pages(self.ctx.params)
@@ -79,6 +89,8 @@ class TenderKendo(BaseParser):
             f'| detail trade={trade.get("trade_id")} | lots={len(lots)}'
         )
         for item in lots:
+            if not item.get('lot_id'):
+                continue
             item['organizer'] = organizer
             item['detail'] = main
             item['attachments'] = docs

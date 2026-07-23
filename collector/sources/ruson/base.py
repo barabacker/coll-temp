@@ -29,6 +29,13 @@ class TenderRuson(BaseParser):
     LISTING_PATH: ClassVar[str] = 'bankrot/trade_list.php'
     BASE_URL: ClassVar[str]
 
+    def __init__(self, ctx: Any) -> None:
+        super().__init__(ctx)
+        # De-duplicate trades across the whole crawl: a trade can reappear on a
+        # later page (per-lot listings span pages; live re-sorting on trade
+        # listings), and must be dived — and emitted — only once.
+        self._seen_trades: set[object] = set()
+
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         if 'DOMAIN' in cls.__dict__ or 'LISTING_PATH' in cls.__dict__:
@@ -44,14 +51,18 @@ class TenderRuson(BaseParser):
             f'{response.request.method} | {response.status} | page={page} '
             f'| trades={len(trades)}'
         )
+        seen = self._seen_trades
         for trade in trades:
             detail_url = trade.get('detail_url')
-            if detail_url:
-                yield self.request(
-                    urljoin(response.request.url, str(detail_url)),
-                    callback=self.parse_lots_page,
-                    metadata={'trade': trade},
-                )
+            nid = trade.get('trade_nid')
+            if not detail_url or nid in seen:
+                continue
+            seen.add(nid)
+            yield self.request(
+                urljoin(response.request.url, str(detail_url)),
+                callback=self.parse_lots_page,
+                metadata={'trade': trade},
+            )
 
         next_page = find_next_page(sel, page)
         max_pages = read_max_pages(self.ctx.params)
@@ -67,4 +78,5 @@ class TenderRuson(BaseParser):
             f'| lots trade={trade.get("trade_id")} | lots={len(lots)}'
         )
         for item in lots:
-            yield item
+            if item.get('lot_id'):
+                yield item
