@@ -68,3 +68,24 @@ def test_ruson_crawl_expands_trades_into_lots():
     assert first['price'] == 1315000.0
     assert first['status'] == 'Торги объявлены'
     assert first['detail']
+
+
+def test_ruson_crawl_dedupes_trades_across_pages():
+    """The same listing served on pages 1 and 2 must dive each trade once.
+
+    Regression for the cross-page duplicate-lot_id bug (crawl-level _seen_trades).
+    """
+    sink = _Sink()
+    http = _FakeHttp()  # serves the same LISTING for every trade_list URL
+    ctx = ParserContext(http=http, params={'max_pages': '2'}, lot_sink=sink)
+    parser = NistpParser(ctx)
+
+    asyncio.run(parser.crawl())
+
+    detail_calls = [c for c in http.calls if 'trade_view.php' in c]
+    # 20 distinct trades: dived exactly once even though the pager advanced to
+    # page 2 with identical content (without dedup this would be 40).
+    assert len(detail_calls) == 20
+    assert len(detail_calls) == len(set(detail_calls))
+    assert len(sink.items) == 20
+    assert any('pagenum=2' in c for c in http.calls)  # page 2 was fetched
