@@ -44,8 +44,13 @@ def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, o
     organizer = _field(selector, 'Организатор')
 
     items: list[dict[str, object]] = []
+    # Lot headers only: a <th> (most sites) or span.lot_title (promkonsalt), and
+    # only the innermost such element. Restricting to headers matters — prose
+    # elsewhere on the page ("…задаток, Лот № 1, должник…") also contains the
+    # phrase and previously produced a phantom, price-less duplicate lot.
     markers = selector.xpath(
-        '//*[contains(., "Лот №") and not(descendant::*[contains(., "Лот №")])]'
+        '//*[(self::th or contains(@class, "lot_title")) and contains(., "Лот №")'
+        ' and not(descendant::*[contains(., "Лот №")])]'
     )
     for marker in markers:
         marker_text = clean(marker.xpath('string(.)').get()) or ''

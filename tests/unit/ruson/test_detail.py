@@ -39,6 +39,21 @@ def test_parse_lots_first_lot():
     assert first['detail']
 
 
+def test_parse_lots_ignores_prose_mentioning_lot_number():
+    """Prose ("…задаток, Лот № 1, должник…") must not be taken for a lot header.
+
+    Regression: such a paragraph produced a phantom second lot with the same
+    lot_id and no price — the source of the duplicate/null-price rows in the
+    collected data.
+    """
+    fixture = Path(__file__).parents[2] / 'fixtures' / 'ruson' / 'nistp_detail_prose_lot.html'
+    sel = Selector(text=fixture.read_text(encoding='utf-8'))
+    lots = parse_lots(sel, {'trade_id': '68289', 'trade_number': '68289-ОАОФ', '_source': 'nistp'})
+    assert len(lots) == 1
+    assert lots[0]['lot_id'] == '68289_1'
+    assert lots[0]['price'] == 140000.0
+
+
 def test_parse_lots_promkonsalt_variant():
     # promkonsalt: plain <td> label/value (no class="label") and span.lot_title
     # instead of a <th> "Лот №" marker.
