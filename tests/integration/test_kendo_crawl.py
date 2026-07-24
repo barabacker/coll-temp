@@ -67,4 +67,7 @@ def test_kendo_crawl_expands_trades_into_lots():
     assert first.lot_id == '10775_5'
     assert first.price == 6721200.0
     assert first.status == 'Идет прием заявок'
+    # semantic fields flow through the full pipeline (listing card -> detail -> Lot):
+    assert first.trade_number == '10775–ОАОФ'
+    assert first.debtor == 'Баранов Виталий Витальевич'
     assert first.extra and first.attachments

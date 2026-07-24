@@ -32,7 +32,7 @@ FINGERPRINT_FIELDS: tuple[str, ...] = (
     'price',
     'bidding_date',
     'event_date',
-    'trade_title',
+    'trade_number',
 )
 
 

@@ -13,8 +13,9 @@ from collector.core.lot import Lot
 FULL_ITEM = {
     'lot_id': '0099382_1',
     'trade_id': '0099382',
+    'trade_number': '0099382',
     'lot_num': '1',
-    'trade_title': 'Багаутдинова Рузиля Вазировна',
+    'debtor': 'Багаутдинова Рузиля Вазировна',
     'trade_type': 'Открытый аукцион',
     'organizer': 'Климова Светлана Евгеньевна',
     'description': 'Право собственности на объект недвижимости',
@@ -34,8 +35,9 @@ FULL_ITEM = {
 MINIMAL_ITEM = {
     'lot_id': '68289_1',
     'trade_id': '68289',
+    'trade_number': '68289-ОАОФ',
     'lot_num': '1',
-    'trade_title': '68289-ОАОФ',
+    'debtor': 'ООО "Ромашка"',
     'trade_type': 'ОАОФ',
     'organizer': None,
     'description': 'Легковой автомобиль',
@@ -54,6 +56,9 @@ def test_full_item_normalized():
     lot = Lot.model_validate(FULL_ITEM)
     assert lot.source == 'centerr'
     assert lot.lot_id == '0099382_1'
+    assert lot.trade_number == '0099382'
+    assert lot.debtor == 'Багаутдинова Рузиля Вазировна'
+    assert lot.organizer == 'Климова Светлана Евгеньевна'
     assert lot.price == 5500800.0
     # dates normalized, raw kept
     assert lot.bidding_deadline == datetime(2026, 8, 26, 12, 30)
@@ -71,6 +76,8 @@ def test_minimal_item_defaults_and_finished_status():
     assert lot.attachments == []
     assert lot.price_schedule == []
     assert lot.is_active is False  # "Торги завершены"
+    assert lot.trade_number == '68289-ОАОФ'
+    assert lot.debtor == 'ООО "Ромашка"'
     assert lot.bidding_deadline == datetime(2026, 8, 28, 0, 0)
 
 

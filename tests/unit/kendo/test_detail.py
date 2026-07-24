@@ -15,9 +15,12 @@ from collector.sources.kendo.parsing.detail import (
 
 FIXTURE = Path(__file__).parents[2] / 'fixtures' / 'kendo' / 'detail_oaof.html'
 
+# parse_lots receives the trade_ctx that base.extract_lots builds: trade_number
+# from the listing card, debtor parsed out of its "…, должник X" title tail.
 TRADE = {
     'trade_id': '10775',
-    'trade_title': 'Открытый аукцион …, должник Баранов Виталий Витальевич',
+    'trade_number': '10775–ОАОФ',
+    'debtor': 'Баранов Виталий Витальевич',
     'trade_type': 'ОАОФ',
     'bidding_date': '21.08.2026 17:00:00',
     'event_date': '22.08.2026 12:00:00',
@@ -46,7 +49,8 @@ def test_parse_lots_count_and_first_lot():
     assert first['status'] == 'Идет прием заявок'
     assert first['lot_url'].endswith('/oaof/10775/lots/3090')
     assert 'М7-КРЕДИТ' in first['description']
-    assert first['trade_title'] == TRADE['trade_title']
+    assert first['trade_number'] == TRADE['trade_number']
+    assert first['debtor'] == TRADE['debtor']
     assert first['bidding_date'] == '21.08.2026 17:00:00'
     assert first['_source'] == 'trade_alliance'
 

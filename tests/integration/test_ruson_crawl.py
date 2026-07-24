@@ -69,6 +69,10 @@ def test_ruson_crawl_expands_trades_into_lots():
     assert first.lot_id == '68240_1'
     assert first.price == 1315000.0
     assert first.status == 'Торги объявлены'
+    # organizer/debtor are carried from the listing columns through to the Lot.
+    assert first.trade_number == '68240-ОАОФ'
+    assert first.debtor == 'Ионов Павел Олегович'
+    assert first.organizer == 'Чахоян Кима Самвеловна'
     assert first.extra
 
 

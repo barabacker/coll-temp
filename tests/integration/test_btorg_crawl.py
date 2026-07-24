@@ -65,4 +65,6 @@ def test_btorg_crawl_expands_trades_into_lots():
     assert first.lot_id == '12850_1'
     assert first.price == 280000.0
     assert first.status == 'объявлены'
+    assert first.trade_number == '12850-ОАОФ'
+    assert first.debtor == 'Летовальцева Любовь Николаевна'
     assert first.extra

@@ -35,6 +35,10 @@ def test_nistp_data_href_variant():
     assert first['trade_nid'] == '484796'
     assert first['trade_number'] == '68240-ОАОФ'
     assert first['detail_url'] == 'https://nistp.ru/bankrot/trade_view.php?trade_nid=484796'
+    # organizer/debtor located by their column header (positions vary per site);
+    # debtor is the first bold span of the "должник + object" cell.
+    assert first['organizer'] == 'Чахоян Кима Самвеловна'
+    assert first['debtor'] == 'Ионов Павел Олегович'
 
 
 def test_sistematorg_onclick_variant():

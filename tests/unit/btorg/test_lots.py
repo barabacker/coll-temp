@@ -16,6 +16,7 @@ TRADE = {
     'trade_type': 'ОАОФ',
     'status': 'объявлены',
     'list_date': '23.07.2026 00:00',
+    'debtor': 'Иванов Иван Иванович',
     'organizer': 'Серова Любовь Хабировна',
     'lots_url': '/etp/trade/inner-view-lots.html?perspective=inline&id=105448698',
     '_source': 'atctrade',
@@ -34,7 +35,8 @@ def test_parse_lots_first_lot():
     assert first['lot_num'] == '1'
     assert first['price'] == 280000.0
     assert first['status'] == 'объявлены'
-    assert first['trade_title'] == '12850-ОАОФ'
+    assert first['trade_number'] == '12850-ОАОФ'
+    assert first['debtor'] == 'Иванов Иван Иванович'
     assert first['bidding_date'] == '23.07.2026 00:00'
     assert first['description']
     assert first['_source'] == 'atctrade'

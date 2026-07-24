@@ -27,8 +27,9 @@ class Lot(BaseModel):
     trade_id: str
     lot_num: str | None = None
 
-    trade_title: str | None = None
+    trade_number: str | None = None
     trade_type: str | None = None
+    debtor: str | None = None
     organizer: str | None = None
 
     description: str | None = None

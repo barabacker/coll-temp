@@ -41,7 +41,10 @@ def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, o
     status = _field(selector, 'Статус торгов') or trade.get('status')
     bidding_date = _field(selector, 'Дата окончания представления')
     event_date = _field(selector, 'Дата начала представления')
-    organizer = _field(selector, 'Организатор')
+    # organizer/debtor come from the listing (the detail page has no clean
+    # label for either — verified across the group).
+    organizer = trade.get('organizer')
+    debtor = trade.get('debtor')
 
     items: list[dict[str, object]] = []
     # Lot headers only: a <th> (most sites) or span.lot_title (promkonsalt), and
@@ -69,8 +72,9 @@ def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, o
             {
                 'lot_id': f'{trade_id}_{lot_num}' if trade_id and lot_num else None,
                 'trade_id': trade_id,
+                'trade_number': trade.get('trade_number'),
                 'lot_num': lot_num,
-                'trade_title': trade.get('trade_number'),
+                'debtor': debtor,
                 'lot_url': trade.get('detail_url'),
                 'description': _field(lot, 'Наименование') or title_desc,
                 'price': parse_price(price_raw),

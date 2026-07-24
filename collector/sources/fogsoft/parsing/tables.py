@@ -70,8 +70,9 @@ def parse_table(selector: Selector, source: str) -> list[dict[str, object]]:
             {
                 'lot_id': f'{trade_id}_{lot_num}' if trade_id and lot_num else None,
                 'trade_id': trade_id,
+                'trade_number': trade_id,
                 'lot_num': lot_num,
-                'trade_title': clean(tr.xpath('string(./td[2])').get()),
+                'debtor': clean(tr.xpath('string(./td[2])').get()),
                 'lot_url': clean(tr.xpath("./td[4]/a[@class='tip-lot']/@href").get()),
                 'description': clean(tr.xpath("./td[4]/a[@class='tip-lot']/text()").get()),
                 'price': parse_price(price_raw),

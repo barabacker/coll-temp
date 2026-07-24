@@ -7,6 +7,7 @@ trade-level fields and every lot. Crawl skeleton lives in ``DiveParser``.
 
 from __future__ import annotations
 
+import re
 from typing import Any, ClassVar
 
 from collector.core.spider import DiveParser
@@ -16,6 +17,9 @@ from collector.sources.kendo.parsing.detail import (
     parse_main_info,
 )
 from collector.sources.kendo.parsing.listing import find_next_page, parse_listing
+
+
+_DEBTOR_RE = re.compile(r'должник[аи]?\s+(.+)$', re.IGNORECASE)
 
 
 class TenderKendo(DiveParser):
@@ -33,10 +37,14 @@ class TenderKendo(DiveParser):
         main = parse_main_info(selector)
         docs = parse_documents(selector)
         organizer = main.get('Наименование')
+        # Debtor is the "…, должник X" tail of the listing card title.
+        card_title = trade.get('trade_title') or ''
+        debtor_m = _DEBTOR_RE.search(card_title)
         # Trade-level fingerprint fields come from the authoritative detail page,
         # not the listing card (which is lot-level on the per-lot template).
         trade_ctx = dict(trade)
-        trade_ctx['trade_title'] = main.get('Номер торгов') or trade.get('trade_title')
+        trade_ctx['trade_number'] = trade.get('trade_number')
+        trade_ctx['debtor'] = debtor_m.group(1).strip() if debtor_m else None
         trade_ctx['bidding_date'] = main.get('Окончание приема заявок') or trade.get('bidding_date')
         trade_ctx['event_date'] = main.get('Подведение результатов торгов') or trade.get('event_date')
 

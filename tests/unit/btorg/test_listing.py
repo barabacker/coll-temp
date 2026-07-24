@@ -41,6 +41,7 @@ def test_parse_listing_first_trade():
     assert first['status'] == 'объявлены'
     assert first['lots_url'] == '/etp/trade/inner-view-lots.html?perspective=inline&id=105448698'
     assert first['organizer'].startswith('Серова')
+    assert first['debtor'] == 'Летовальцева Любовь Николаевна'
     assert first['_source'] == 'atctrade'
 
 

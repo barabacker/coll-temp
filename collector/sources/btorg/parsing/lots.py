@@ -42,8 +42,9 @@ def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, o
             {
                 'lot_id': f'{trade_id}_{lot_num}' if trade_id and lot_num else None,
                 'trade_id': trade_id,
+                'trade_number': trade.get('trade_number'),
                 'lot_num': lot_num,
-                'trade_title': trade.get('trade_number'),
+                'debtor': trade.get('debtor'),
                 'lot_url': trade.get('lots_url'),
                 'description': _field(lot, 'Предмет торгов'),
                 'price': parse_price(price_raw),

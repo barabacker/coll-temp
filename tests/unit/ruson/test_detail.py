@@ -15,6 +15,8 @@ TRADE = {
     'trade_nid': '484796',
     'trade_number': '68240-ОАОФ',
     'trade_type': 'ОАОФ',
+    'debtor': 'Петров Пётр Петрович',
+    'organizer': 'Сидоров С. С.',
     'detail_url': 'https://nistp.ru/bankrot/trade_view.php?trade_nid=484796',
     '_source': 'nistp',
 }
@@ -34,7 +36,9 @@ def test_parse_lots_first_lot():
     assert first['status'] == 'Торги объявлены'
     assert first['bidding_date'] == '28.08.2026 15:00:00'
     assert first['event_date'] == '23.07.2026 15:00:00'
-    assert first['trade_title'] == '68240-ОАОФ'
+    assert first['trade_number'] == '68240-ОАОФ'
+    assert first['debtor'] == 'Петров Пётр Петрович'
+    assert first['organizer'] == 'Сидоров С. С.'
     assert first['_source'] == 'nistp'
     assert first['detail']
 

@@ -21,7 +21,7 @@ def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, o
     """Expand ``div#lots > a.block-lot`` into per-lot item dicts.
 
     Trade-level fields from ``trade`` (title, dates, source) are copied onto each
-    lot so ``lot_fingerprint`` (status/price/dates/trade_title) works per lot.
+    lot so ``lot_fingerprint`` (status/price/dates/trade_number) works per lot.
     """
     trade_id = trade.get('trade_id')
     items: list[dict[str, object]] = []
@@ -33,7 +33,9 @@ def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, o
             {
                 'lot_id': f'{trade_id}_{lot_num}' if trade_id and lot_num else None,
                 'trade_id': trade_id,
+                'trade_number': trade.get('trade_number'),
                 'lot_num': lot_num,
+                'debtor': trade.get('debtor'),
                 'lot_url': link.xpath('./@href').get(),
                 'description': _clean(link.xpath('string(.)').get()),
                 'price': parse_price(price_raw),
@@ -41,7 +43,6 @@ def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, o
                 'status': _clean(
                     block.xpath('.//span[contains(@class, "lot-status")]/following-sibling::text()').get()
                 ),
-                'trade_title': trade.get('trade_title'),
                 'trade_type': trade.get('trade_type'),
                 'bidding_date': trade.get('bidding_date'),
                 'event_date': trade.get('event_date'),

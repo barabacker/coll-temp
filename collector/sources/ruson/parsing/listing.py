@@ -24,16 +24,28 @@ _CODE_RE = re.compile(r'(\d+)-[А-Я]{2,}')
 _PAGENUM_RE = re.compile(r'pagenum_send\((\d+)\)')
 
 
+def _header_index(selector: Selector, needle: str) -> int | None:
+    """0-based td index whose column header contains ``needle`` (lowered)."""
+    for i, th in enumerate(selector.xpath('//tr[th]/th')):
+        if needle in (clean(th.xpath('string(.)').get()) or '').lower():
+            return i
+    return None
+
+
 def parse_listing(selector: Selector, source: str) -> list[dict[str, object]]:
     """Reduce a listing page to DISTINCT trades (by trade_nid).
 
     Trade reference comes from a row ``<a href=…trade_view.php…>`` or the row's
     ``onclick``. ``trade_id`` is the visible code's digits when present, else the
     internal nid; ``detail_url`` may be absolute or root-relative (the caller
-    resolves it against the page URL).
+    resolves it against the page URL). Organizer/debtor are read from the listing
+    columns located by their header (their position varies per site); absent a
+    header (node_view / lot listings) they are left None.
     """
     trades: list[dict[str, object]] = []
     seen: set[str] = set()
+    org_idx = _header_index(selector, 'организатор')
+    debtor_idx = _header_index(selector, 'должник')
     rows = selector.xpath(
         '//tr[.//a[contains(@href, "trade_view.php")]] | //tr[contains(@onclick, "trade_view.php")]'
     )
@@ -56,7 +68,15 @@ def parse_listing(selector: Selector, source: str) -> list[dict[str, object]]:
         # The "Состояние" column sits at a different index per site, so pick the
         # cell that reads like a status. Used only to stop paging past the
         # archive; the authoritative status comes from the detail page.
-        status = pick_status([cell.xpath('string(.)').get() for cell in row.xpath('./td')])
+        tds = row.xpath('./td')
+        status = pick_status([cell.xpath('string(.)').get() for cell in tds])
+        organizer = None
+        if org_idx is not None and org_idx < len(tds):
+            organizer = clean(tds[org_idx].xpath('string(.)').get())
+        debtor = None
+        if debtor_idx is not None and debtor_idx < len(tds):
+            # cell is "debtor + object"; the debtor name is the first bold span.
+            debtor = clean(tds[debtor_idx].xpath('.//span[contains(@style, "bold")][1]/text()').get())
         trades.append(
             {
                 'trade_nid': trade_nid,
@@ -65,6 +85,8 @@ def parse_listing(selector: Selector, source: str) -> list[dict[str, object]]:
                 'trade_type': clean(code.group(0).split('-')[1]) if code else None,
                 'detail_url': ref,
                 'status': status,
+                'organizer': organizer,
+                'debtor': debtor,
                 '_source': source,
             }
         )
