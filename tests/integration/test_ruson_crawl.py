@@ -6,9 +6,13 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
+from parsel import Selector
+
+from collector.core.parsing import is_active_status
+from collector.core.registry import get_parser
 from collector.core.spider import ParserContext
 from collector.core.storage.contracts import ChangeStatus
-from collector.core.registry import get_parser
+from collector.sources.ruson.parsing.listing import parse_listing
 
 FIX = Path(__file__).parents[1] / 'fixtures' / 'ruson'
 LISTING = (FIX / 'nistp_listing.html').read_text(encoding='utf-8')
@@ -70,8 +74,12 @@ def test_ruson_crawl_expands_trades_into_lots():
     assert first['detail']
 
 
-def test_ruson_crawl_stops_when_page_has_no_live_trades():
-    """Paging stops at the first listing page holding only finished trades."""
+def test_ruson_crawl_pages_through_archive_without_diving():
+    """Finished trades are not fetched, but paging continues past them.
+
+    Deep pages can still hold the odd live trade (measured on aukcioncenter /
+    nistp), so the archive is paged through — only the dive is skipped.
+    """
 
     class _ArchiveHttp(_FakeHttp):
         async def request(self, method: str, url: str, **kwargs: Any) -> _Raw:
@@ -82,14 +90,40 @@ def test_ruson_crawl_stops_when_page_has_no_live_trades():
 
     sink = _Sink()
     http = _ArchiveHttp()
-    ctx = ParserContext(http=http, params={'max_pages': '5'}, lot_sink=sink)
+    ctx = ParserContext(http=http, params={'max_pages': '3'}, lot_sink=sink)
     parser = get_parser('nistp')(ctx)
 
     asyncio.run(parser.crawl())
 
-    # page 1 is still dived (its trades are collected), but no page 2 is fetched
-    assert any('trade_view.php' in c for c in http.calls)
-    assert not any('pagenum=' in c for c in http.calls)
+    assert not any('trade_view.php' in c for c in http.calls)  # nothing dived
+    assert not sink.items
+    assert any('pagenum=2' in c for c in http.calls)  # but paging continued
+
+
+def test_ruson_crawl_collects_live_trades_on_an_archive_page():
+    """A lone live trade deep in the archive is still collected."""
+
+    # Mark most rows finished, leaving a handful live among them.
+    mostly_archive = LISTING.replace('Торги объявлены', 'Торги завершены', 17)
+    trades = parse_listing(Selector(text=mostly_archive), 'nistp')
+    live = [t for t in trades if is_active_status(t.get('status'))]
+    assert 0 < len(live) < len(trades)  # the fixture really is a mix
+
+    class _MostlyArchiveHttp(_FakeHttp):
+        async def request(self, method: str, url: str, **kwargs: Any) -> _Raw:
+            raw = await super().request(method, url, **kwargs)
+            return raw if 'trade_view.php' in url else _Raw(mostly_archive)
+
+    sink = _Sink()
+    http = _MostlyArchiveHttp()
+    ctx = ParserContext(http=http, params={'max_pages': '1'}, lot_sink=sink)
+    parser = get_parser('nistp')(ctx)
+
+    asyncio.run(parser.crawl())
+
+    # exactly the live trades were fetched — the finished ones were skipped
+    assert len([c for c in http.calls if 'trade_view.php' in c]) == len(live)
+    assert len(sink.items) == len(live)
 
 
 def test_ruson_crawl_dedupes_trades_across_pages():

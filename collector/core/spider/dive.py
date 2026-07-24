@@ -77,8 +77,14 @@ class DiveParser(BaseParser):
             f'| trades={len(trades)}'
         )
 
+        only_active = read_only_active(self.ctx.params)
         seen = self._seen_trades
         for trade in trades:
+            # Diving is what costs (a request per trade plus the whole detail
+            # blob); listing pages are cheap. So page on through the archive but
+            # only dive live trades — deep stragglers still get collected.
+            if only_active and not is_active_status(trade.get('status')):
+                continue
             dive_url = trade.get(self.DIVE_URL_KEY)
             trade_key = trade.get(self.TRADE_KEY)
             if not dive_url or trade_key in seen:
@@ -90,14 +96,6 @@ class DiveParser(BaseParser):
                 metadata={'trade': trade},
                 headers=self.DIVE_HEADERS,
             )
-
-        # Listings are ordered newest-first, so once a page holds nothing live
-        # the deeper pages are older still — stop instead of scraping archive.
-        if read_only_active(self.ctx.params) and not any(
-            is_active_status(str(t.get('status')) if t.get('status') else None) for t in trades
-        ):
-            await self.log(f'page={page}: нет актуальных лотов — останавливаю пагинацию')
-            return
 
         next_page = self.next_page(sel, page)
         max_pages = read_max_pages(self.ctx.params)

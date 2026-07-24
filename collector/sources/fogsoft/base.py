@@ -77,7 +77,12 @@ class TenderFogsoft(BaseParser):
             if lot_ids:
                 existing_fingerprints = await self.ctx.lot_sink.get_fingerprints(self.name, lot_ids)
 
+        only_active = read_only_active(self.ctx.params)
         for item in items:
+            # Here a listing row *is* the lot, so the filter drops finished lots
+            # outright: we page on through the archive but never pay for it.
+            if only_active and not is_active_status(item.get('status')):
+                continue
             lot_id = item.get('lot_id')
             needs_dive = (
                 self.ctx.lot_sink is not None
@@ -92,15 +97,6 @@ class TenderFogsoft(BaseParser):
                 )
             else:
                 yield item
-
-        # Listings are ordered newest-first, so once a page holds nothing live
-        # the deeper pages are older still — stop instead of scraping archive.
-        if read_only_active(self.ctx.params) and not any(
-            is_active_status(str(row.get('status')) if row.get('status') else None)
-            for row in items
-        ):
-            await self.log(f'page={page}: нет актуальных лотов — останавливаю пагинацию')
-            return
 
         if page == 1:
             cviewstate, eventvalidation = extract_initial_tokens(response.text)

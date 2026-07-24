@@ -106,12 +106,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description='Run parsers and dump lots to data/<key>.json')
     parser.add_argument('keys', nargs='*', help='parser keys to run (default: all)')
     parser.add_argument('--engine', help='run only keys from this engine (kendo, btorg, ruson, fogsoft)')
-    parser.add_argument('--max-pages', type=int, default=None, help='cap listing pages per site (default: all)')
+    parser.add_argument(
+        '--max-pages',
+        type=int,
+        default=200,
+        help='safety cap on listing pages per site (default: 200; 0 = no cap). '
+        'Listing pages are cheap — only live trades are actually fetched.',
+    )
     parser.add_argument(
         '--all-lots',
         action='store_true',
-        help='keep paging into the archive; by default paging stops at the first '
-        'listing page with no live trades (finished/cancelled only)',
+        help='also collect finished/cancelled lots (by default only live trades '
+        'are fetched, while the listing is still paged through)',
     )
     parser.add_argument('--concurrency', type=int, default=4, help='sites scraped in parallel (default: 4)')
     parser.add_argument('--out', default='data', help='output directory (default: data)')
@@ -142,7 +148,7 @@ def main() -> None:
         raise SystemExit(1)
 
     params: dict[str, str] = {}
-    if args.max_pages is not None:
+    if args.max_pages:
         params['max_pages'] = str(args.max_pages)
     if args.all_lots:
         params['only_active'] = '0'
