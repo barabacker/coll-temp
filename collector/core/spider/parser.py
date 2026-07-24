@@ -13,6 +13,7 @@ from collector.core.spider.response import Response
 from collector.core.storage.contracts import ChangeStatus
 
 if TYPE_CHECKING:
+    from collector.core.lot import Lot
     from collector.http.middleware import ResponseHook
 
 
@@ -68,7 +69,7 @@ class BaseParser(ABC):
         if self.ctx.log is not None:
             await self.ctx.log(message)
 
-    async def process_item(self, item: dict[str, Any]) -> None:
+    async def process_item(self, item: Lot) -> None:
         """Count lots and, if a sink is configured, persist them."""
         self.item_count += 1
         if self.ctx.lot_sink is not None:

@@ -6,6 +6,7 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
+from collector.core.lot import Lot
 from collector.core.spider import ParserContext
 from collector.core.storage.contracts import ChangeStatus
 from collector.core.registry import get_parser
@@ -13,8 +14,6 @@ from collector.core.registry import get_parser
 FIX = Path(__file__).parents[1] / 'fixtures' / 'btorg'
 LISTING = (FIX / 'atctrade_listing.html').read_text(encoding='utf-8')
 LOTS = (FIX / 'atctrade_lots.html').read_text(encoding='utf-8')
-
-FINGERPRINT_KEYS = {'status', 'price', 'bidding_date', 'event_date', 'trade_title'}
 
 
 class _Raw:
@@ -39,12 +38,12 @@ class _FakeHttp:
 
 class _Sink:
     def __init__(self) -> None:
-        self.items: list[dict[str, Any]] = []
+        self.items: list[Lot] = []
 
     async def get_fingerprints(self, source: str, lot_ids: Any) -> dict[str, str]:
         return {}
 
-    async def save(self, item: dict[str, Any]) -> ChangeStatus:
+    async def save(self, item: Lot) -> ChangeStatus:
         self.items.append(item)
         return ChangeStatus.NEW
 
@@ -63,8 +62,7 @@ def test_btorg_crawl_expands_trades_into_lots():
     assert any('inner-view-lots' in c for c in http.calls)  # dived for lots
     assert not any('page=2' in c for c in http.calls)  # max_pages=1 stopped paging
     first = sink.items[0]
-    assert FINGERPRINT_KEYS <= first.keys()
-    assert first['lot_id'] == '12850_1'
-    assert first['price'] == 280000.0
-    assert first['status'] == 'объявлены'
-    assert first['detail']
+    assert first.lot_id == '12850_1'
+    assert first.price == 280000.0
+    assert first.status == 'объявлены'
+    assert first.extra

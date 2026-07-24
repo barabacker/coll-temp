@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urljoin
 
+from collector.core.lot import Lot
 from collector.core.parsing import is_active_status, read_only_active
 from collector.core.spider import BaseParser, Request, Response
 from collector.core.storage.contracts import lot_fingerprint
@@ -96,7 +97,7 @@ class TenderFogsoft(BaseParser):
                     metadata={'item': item},
                 )
             else:
-                yield item
+                yield Lot.model_validate(item)
 
         if page == 1:
             cviewstate, eventvalidation = extract_initial_tokens(response.text)
@@ -132,4 +133,4 @@ class TenderFogsoft(BaseParser):
         item['price_schedule'] = parse_price_schedule(sel)
         lot_id = item.get('lot_id')
         await self.log(f'{response.request.method} | {response.status} | detail lot_id={lot_id}')
-        yield item
+        yield Lot.model_validate(item)

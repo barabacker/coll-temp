@@ -16,6 +16,7 @@ from collections.abc import AsyncIterator
 from typing import Any, ClassVar
 from urllib.parse import urljoin
 
+from collector.core.lot import Lot
 from collector.core.parsing import is_active_status, read_max_pages, read_only_active
 from collector.core.spider.parser import BaseParser
 from collector.core.spider.request import Request
@@ -116,4 +117,4 @@ class DiveParser(BaseParser):
         for item in lots:
             # An item without a lot_id cannot be upserted downstream — drop it.
             if item.get('lot_id'):
-                yield item
+                yield Lot.model_validate(item)

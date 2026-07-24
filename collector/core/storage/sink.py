@@ -8,15 +8,16 @@ injected at runtime — see platforms/storage.py.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Protocol
+from typing import Protocol
 
+from collector.core.lot import Lot
 from collector.core.storage.contracts import ChangeStatus
 
 
 class LotSink(Protocol):
     """What a parser needs to persist lots and detect changes."""
 
-    async def save(self, item: dict[str, Any]) -> ChangeStatus:
+    async def save(self, item: Lot) -> ChangeStatus:
         """Upsert a lot, returning NEW / CHANGED / UNCHANGED."""
         ...
 
