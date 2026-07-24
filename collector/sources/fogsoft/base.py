@@ -96,7 +96,8 @@ class TenderFogsoft(BaseParser):
                     callback=self.parse_detail,
                     metadata={'item': item},
                 )
-            else:
+            elif item.get('lot_id'):
+                # An item without a lot_id cannot be validated/upserted — drop it.
                 yield Lot.model_validate(item)
 
         if page == 1:
@@ -133,4 +134,5 @@ class TenderFogsoft(BaseParser):
         item['price_schedule'] = parse_price_schedule(sel)
         lot_id = item.get('lot_id')
         await self.log(f'{response.request.method} | {response.status} | detail lot_id={lot_id}')
-        yield Lot.model_validate(item)
+        if lot_id:
+            yield Lot.model_validate(item)
