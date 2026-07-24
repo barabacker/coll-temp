@@ -81,7 +81,7 @@ def main():
 
     print(f'\n=== собрано {result.total} лотов -> {out.name} ===')
     for item in sink.items[:5]:
-        print(f'- {item.lot_id:20} | {(item.trade_title or "")[:46]:46} | {item.price}')
+        print(f'- {item.lot_id:20} | {(item.debtor or "")[:46]:46} | {item.price}')
 
 
 if __name__ == '__main__':
