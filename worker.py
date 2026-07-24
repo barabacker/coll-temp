@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from collector import get_parser, registry  # noqa: E402
+from collector.core.lot import Lot  # noqa: E402
 from collector.core.spider import ParserContext  # noqa: E402
 from collector.core.storage.contracts import ChangeStatus  # noqa: E402
 from collector.http.factory import build_http_client  # noqa: E402
@@ -45,12 +46,12 @@ class CollectingSink:
     """
 
     def __init__(self) -> None:
-        self.items: list[dict[str, object]] = []
+        self.items: list[Lot] = []
 
     async def get_fingerprints(self, source: str, lot_ids: object) -> dict[str, str]:
         return {}
 
-    async def save(self, item: dict[str, object]) -> ChangeStatus:
+    async def save(self, item: Lot) -> ChangeStatus:
         self.items.append(item)
         return ChangeStatus.NEW
 
@@ -84,7 +85,11 @@ async def _run_site(key: str, params: dict[str, str], out_dir: Path, sem: asynci
         out_dir.mkdir(parents=True, exist_ok=True)
         out_path = out_dir / f'{key}.json'
         out_path.write_text(
-            json.dumps(sink.items, ensure_ascii=False, indent=2, default=str),
+            json.dumps(
+                [lot.model_dump(mode='json') for lot in sink.items],
+                ensure_ascii=False,
+                indent=2,
+            ),
             encoding='utf-8',
         )
         return SiteResult(key, len(sink.items), time.monotonic() - started)

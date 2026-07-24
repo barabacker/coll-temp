@@ -22,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from collector import ParserNotFound, get_parser, registry, run_parser  # noqa: E402
+from collector.core.lot import Lot  # noqa: E402
 from collector.core.storage.contracts import ChangeStatus  # noqa: E402
 
 
@@ -39,7 +40,7 @@ class CollectingSink:
     async def get_fingerprints(self, source, lot_ids):
         return {}
 
-    async def save(self, item):
+    async def save(self, item: Lot):
         self.items.append(item)
         return ChangeStatus.NEW
 
@@ -69,12 +70,18 @@ def main():
     result = run_parser(parser_cls, params={'max_pages': str(max_pages)}, sink=sink)
 
     out = Path(__file__).parent / 'lots.json'
-    out.write_text(json.dumps(sink.items, ensure_ascii=False, indent=2), encoding='utf-8')
+    out.write_text(
+        json.dumps(
+            [lot.model_dump(mode='json') for lot in sink.items],
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding='utf-8',
+    )
 
     print(f'\n=== собрано {result.total} лотов -> {out.name} ===')
     for item in sink.items[:5]:
-        price = item.get('price')
-        print(f'- {item.get("lot_id"):20} | {(item.get("trade_title") or "")[:46]:46} | {price}')
+        print(f'- {item.lot_id:20} | {(item.trade_title or "")[:46]:46} | {item.price}')
 
 
 if __name__ == '__main__':
