@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import re
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,8 @@ _WS_RE = re.compile(r'\s+')
 # Leading numeric run: space/nbsp thousands, dot or comma decimal. Stops before
 # trailing currency/VAT text (e.g. "280 000,00 руб, НДС не облагается").
 _PRICE_HEAD_RE = re.compile(r'[\d\s\xa0.,]+')
+# DD.MM.YYYY with an optional HH:MM[:SS]; trailing text (e.g. "(33 дн.)") ignored.
+_DATETIME_RE = re.compile(r'(\d{2})\.(\d{2})\.(\d{4})(?:\D+(\d{2}):(\d{2})(?::(\d{2}))?)?')
 
 
 def clean(value: str | None) -> str | None:
@@ -92,4 +95,21 @@ def parse_price(value: str | None) -> float | None:
         return float(raw)
     except ValueError:
         logger.warning('parsing.bad_price value=%s', value)
+        return None
+
+
+def parse_datetime(value: str | None) -> datetime | None:
+    """Parse a "DD.MM.YYYY[ HH:MM[:SS]]" string to a datetime, else None."""
+    if not value:
+        return None
+    m = _DATETIME_RE.search(value)
+    if not m:
+        return None
+    day, month, year, hour, minute, second = m.groups()
+    try:
+        return datetime(
+            int(year), int(month), int(day),
+            int(hour or 0), int(minute or 0), int(second or 0),
+        )
+    except ValueError:
         return None
