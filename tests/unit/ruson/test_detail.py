@@ -15,8 +15,10 @@ TRADE = {
     'trade_nid': '484796',
     'trade_number': '68240-ОАОФ',
     'trade_type': 'ОАОФ',
-    'debtor': 'Петров Пётр Петрович',
-    'organizer': 'Сидоров С. С.',
+    # listing-level debtor/organizer are only a fallback — the detail page's
+    # party blocks are authoritative and take precedence when present.
+    'debtor': 'listing fallback debtor',
+    'organizer': 'listing fallback organizer',
     'detail_url': 'https://nistp.ru/bankrot/trade_view.php?trade_nid=484796',
     '_source': 'nistp',
 }
@@ -37,10 +39,39 @@ def test_parse_lots_first_lot():
     assert first['bidding_date'] == '28.08.2026 15:00:00'
     assert first['event_date'] == '23.07.2026 15:00:00'
     assert first['trade_number'] == '68240-ОАОФ'
-    assert first['debtor'] == 'Петров Пётр Петрович'
-    assert first['organizer'] == 'Сидоров С. С.'
+    # debtor/organizer read from the detail "Информация о должнике/об
+    # организаторе" blocks, not the listing fallback in TRADE.
+    assert first['debtor'] == 'Ионов Павел Олегович'
+    assert first['organizer'] == 'Чахоян Кима Самвеловна'
     assert first['_source'] == 'nistp'
     assert first['detail']
+
+
+def test_parse_lots_debtor_organizer_from_detail_when_listing_lacks_them():
+    """promkonsalt: listing has no clean debtor/organizer, the detail does.
+
+    The debtor block gives "Фамилия Имя Отчество"; the organizer block is
+    absent, so the "Контактное лицо организатора торгов" ФИО is used.
+    """
+    fixture = Path(__file__).parents[2] / 'fixtures' / 'ruson' / 'promkonsalt_detail.html'
+    sel = Selector(text=fixture.read_text(encoding='utf-8'))
+    lots = parse_lots(sel, {'trade_id': '3179', 'trade_number': '3179-ОАОФ', '_source': 'promkonsalt'})
+    assert lots
+    assert lots[0]['debtor'] == 'Бирюкова Людмила Юрьевна'
+    assert lots[0]['organizer'] == 'Черный Михаил Васильевич'
+
+
+def test_parse_lots_falls_back_to_listing_party_fields():
+    """With no detail party blocks, debtor/organizer come from the listing."""
+    sel = Selector(text='<html><body><table><tr><th>Лот № 1</th></tr>'
+                        '<tr><td>Начальная цена</td><td>100</td></tr></table></body></html>')
+    lots = parse_lots(sel, {
+        'trade_id': '1', 'trade_number': '1-ОАОФ', '_source': 's',
+        'debtor': 'Листинговый Должник', 'organizer': 'Листинговый Организатор',
+    })
+    assert lots
+    assert lots[0]['debtor'] == 'Листинговый Должник'
+    assert lots[0]['organizer'] == 'Листинговый Организатор'
 
 
 def test_parse_lots_ignores_prose_mentioning_lot_number():

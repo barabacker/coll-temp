@@ -29,6 +29,49 @@ def _field(scope: Selector, label: str) -> str | None:
     )
 
 
+def _block(selector: Selector, header: str) -> Selector:
+    """The table enclosing the innermost cell whose text contains ``header``.
+
+    Party info is grouped under section-header rows ("Информация о должнике" /
+    "об организаторе"); its fields live as label/value rows in that header's
+    enclosing table. The innermost-match guard avoids selecting an outer table.
+    """
+    node = selector.xpath(
+        f'//*[contains(normalize-space(.), "{header}")]'
+        f'[not(.//*[contains(normalize-space(.), "{header}")])]'
+    )
+    return node.xpath('./ancestor::table[1]')
+
+
+def _debtor(selector: Selector) -> str | None:
+    """Debtor name from the "Информация о должнике" block, if present.
+
+    Physical persons: "Фамилия Имя Отчество"; legal entities: their full name.
+    """
+    block = _block(selector, 'Информация о должнике')
+    if not block:
+        return None
+    kind = (_field(block, 'Тип должника') or '').lower()
+    if 'юридич' in kind:
+        return _field(block, 'Полное наименование') or _field(block, 'Наименование должника')
+    parts = [_field(block, 'Фамилия'), _field(block, 'Имя'), _field(block, 'Отчество')]
+    return ' '.join(p for p in parts if p) or None
+
+
+def _organizer(selector: Selector) -> str | None:
+    """Organizer from the "Информация об организаторе" block, else the contact.
+
+    Some sites (e.g. promkonsalt) omit the organiser block and only carry a
+    "Контактное лицо организатора" — fall back to that person's ФИО.
+    """
+    block = _block(selector, 'Информация об организаторе')
+    org = _field(block, 'Наименование') if block else None
+    if not org:
+        contact = _block(selector, 'Контактное лицо организатора')
+        org = _field(contact, 'ФИО') if contact else None
+    return org
+
+
 def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, object]]:
     """Expand each "Лот № N" section into a per-lot item dict.
 
@@ -41,10 +84,12 @@ def parse_lots(selector: Selector, trade: dict[str, object]) -> list[dict[str, o
     status = _field(selector, 'Статус торгов') or trade.get('status')
     bidding_date = _field(selector, 'Дата окончания представления')
     event_date = _field(selector, 'Дата начала представления')
-    # organizer/debtor come from the listing (the detail page has no clean
-    # label for either — verified across the group).
-    organizer = trade.get('organizer')
-    debtor = trade.get('debtor')
+    # organizer/debtor: prefer the authoritative detail party blocks; the
+    # listing columns are unreliable on some sites (missing, or bleeding the
+    # lot list into the cell), so fall back to them only when the detail lacks
+    # the block.
+    organizer = _organizer(selector) or trade.get('organizer')
+    debtor = _debtor(selector) or trade.get('debtor')
 
     items: list[dict[str, object]] = []
     # Lot headers only: a <th> (most sites) or span.lot_title (promkonsalt), and
