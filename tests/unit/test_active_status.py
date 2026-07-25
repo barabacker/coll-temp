@@ -34,10 +34,19 @@ def test_live_statuses(status):
         'Торги приостановлены',
         'Торги состоялись',
         'Торги не состоялись',
+        'Окончен',  # fogsoft's finished status (окончен/окончено/окончены)
+        'Окончено',
+        'Торги окончены',
+        'Прием заявок окончен',
     ],
 )
 def test_finished_statuses(status):
     assert is_active_status(status) is False
+
+
+def test_okonchanie_in_a_live_status_is_not_treated_as_finished():
+    # "окончание приёма заявок" (a live cell) must not match the "окончен" marker.
+    assert is_active_status('Окончание приёма заявок 28.08.2026') is True
 
 
 def test_pick_status_finds_the_status_cell():

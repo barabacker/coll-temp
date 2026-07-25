@@ -32,7 +32,7 @@ def clean(value: str | None) -> str | None:
 # missing status) counts as live — we never cut a crawl short on doubt.
 _FINISHED_MARKERS = (
     'завершен', 'завершён', 'состоял', 'отменен', 'отменён',
-    'приостановлен', 'аннулирован', 'признан',
+    'приостановлен', 'аннулирован', 'признан', 'окончен',
 )
 # Words that make a short cell recognisable as a status at all.
 _STATUS_HINTS = (*_FINISHED_MARKERS, 'объявлен', 'прием', 'приём', 'утверждени')
