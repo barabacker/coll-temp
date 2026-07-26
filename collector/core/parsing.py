@@ -56,7 +56,12 @@ def pick_status(texts: list[str | None]) -> str | None:
 
 
 def read_only_active(params: dict[str, str]) -> bool:
-    """Stop paging once a listing page holds no live trades (default: on)."""
+    """Whether to dive only into live trades (default: on).
+
+    When on, finished trades are skipped from the (expensive) detail dive, but
+    the listing is still paged through in full — this flag does not stop
+    pagination. Set ``only_active=0`` to also collect finished/archive lots.
+    """
     raw = params.get('only_active')
     if raw is None or raw == '':
         return True
