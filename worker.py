@@ -114,9 +114,10 @@ def main() -> None:
     parser.add_argument(
         '--max-pages',
         type=int,
-        default=200,
-        help='safety cap on listing pages per site (default: 200; 0 = no cap). '
-        'Listing pages are cheap — only live trades are actually fetched.',
+        default=0,
+        help='safety cap on listing pages per site (default: 0 = no cap, page to '
+        'the last page). Listing pages are cheap; a cap risks missing live lots '
+        'that sit deep in the archive (measured past page 100 on big sites).',
     )
     parser.add_argument(
         '--all-lots',
@@ -169,8 +170,9 @@ def main() -> None:
 
     out_dir = Path(args.out)
     scope = 'all lots (incl. archive)' if args.all_lots else 'live lots only'
+    max_pages_label = args.max_pages if args.max_pages else 'no cap'
     print(
-        f'=== running {len(keys)} site(s), {scope}, max_pages={args.max_pages}, '
+        f'=== running {len(keys)} site(s), {scope}, max_pages={max_pages_label}, '
         f'concurrency={args.concurrency}, dive_concurrency={args.dive_concurrency} ==='
     )
     started = time.monotonic()
