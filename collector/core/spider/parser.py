@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Callable
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from collector.core.parsing import read_concurrency
 from collector.core.spider.context import ParserContext
 from collector.core.spider.request import Request
 from collector.core.spider.response import Response
@@ -99,7 +100,8 @@ class BaseParser(ABC):
                 finally:
                     queue.task_done()
 
-        workers = [asyncio.create_task(worker()) for _ in range(self.concurrency)]
+        n_workers = read_concurrency(self.ctx.params, self.concurrency)
+        workers = [asyncio.create_task(worker()) for _ in range(n_workers)]
         await queue.join()
         for w in workers:
             w.cancel()

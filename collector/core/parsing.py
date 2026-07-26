@@ -76,6 +76,23 @@ def read_max_pages(params: dict[str, str]) -> int | None:
     return value if value > 0 else None
 
 
+def read_concurrency(params: dict[str, str], default: int) -> int:
+    """Read ``concurrency`` (in-site request workers) from job params.
+
+    Falls back to ``default`` (the parser's ClassVar) when unset or invalid; a
+    non-positive value is treated as invalid.
+    """
+    raw = params.get('concurrency')
+    if raw is None or raw == '':
+        return default
+    try:
+        value = int(raw)
+    except (ValueError, TypeError):
+        logger.warning('parsing.bad_concurrency value=%s', raw)
+        return default
+    return value if value > 0 else default
+
+
 def parse_price(value: str | None) -> float | None:
     """Parse a rouble amount to a float.
 

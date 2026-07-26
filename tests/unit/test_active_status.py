@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from collector.core.parsing import is_active_status, pick_status, read_only_active
+from collector.core.parsing import (
+    is_active_status,
+    pick_status,
+    read_concurrency,
+    read_only_active,
+)
 
 
 @pytest.mark.parametrize(
@@ -66,3 +71,12 @@ def test_read_only_active_defaults_on_and_can_be_disabled():
     assert read_only_active({'only_active': '1'}) is True
     assert read_only_active({'only_active': '0'}) is False
     assert read_only_active({'only_active': 'false'}) is False
+
+
+def test_read_concurrency_falls_back_to_default():
+    assert read_concurrency({}, 1) == 1
+    assert read_concurrency({}, 4) == 4
+    assert read_concurrency({'concurrency': ''}, 2) == 2
+    assert read_concurrency({'concurrency': '8'}, 1) == 8
+    assert read_concurrency({'concurrency': '0'}, 3) == 3  # non-positive -> default
+    assert read_concurrency({'concurrency': 'oops'}, 5) == 5  # invalid -> default

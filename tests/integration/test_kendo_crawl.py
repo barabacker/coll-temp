@@ -71,3 +71,19 @@ def test_kendo_crawl_expands_trades_into_lots():
     assert first.trade_number == '10775–ОАОФ'
     assert first.debtor == 'Баранов Виталий Витальевич'
     assert first.extra and first.attachments
+
+
+def test_kendo_crawl_is_correct_under_higher_concurrency():
+    """Raising in-site concurrency must not change what is collected."""
+    sink = _Sink()
+    ctx = ParserContext(
+        http=_FakeHttp(),
+        params={'max_pages': '1', 'concurrency': '5'},
+        lot_sink=sink,
+    )
+    total = asyncio.run(get_parser('trade_alliance')(ctx).crawl())
+
+    assert total == 30
+    assert len(sink.items) == 30
+    # no duplicates introduced by parallel workers
+    assert len({it.lot_id for it in sink.items}) == 30

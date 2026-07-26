@@ -125,6 +125,13 @@ def main() -> None:
         'are fetched, while the listing is still paged through)',
     )
     parser.add_argument('--concurrency', type=int, default=4, help='sites scraped in parallel (default: 4)')
+    parser.add_argument(
+        '--dive-concurrency',
+        type=int,
+        default=1,
+        help='parallel requests within one site — listing pages and detail dives '
+        '(default: 1, i.e. sequential). Raising this speeds up detail-heavy sites.',
+    )
     parser.add_argument('--out', default='data', help='output directory (default: data)')
     parser.add_argument('--list', action='store_true', help='list available keys and exit')
     args = parser.parse_args()
@@ -157,12 +164,14 @@ def main() -> None:
         params['max_pages'] = str(args.max_pages)
     if args.all_lots:
         params['only_active'] = '0'
+    if args.dive_concurrency and args.dive_concurrency != 1:
+        params['concurrency'] = str(args.dive_concurrency)
 
     out_dir = Path(args.out)
     scope = 'all lots (incl. archive)' if args.all_lots else 'live lots only'
     print(
-        f'=== running {len(keys)} site(s), {scope}, '
-        f'max_pages={args.max_pages}, concurrency={args.concurrency} ==='
+        f'=== running {len(keys)} site(s), {scope}, max_pages={args.max_pages}, '
+        f'concurrency={args.concurrency}, dive_concurrency={args.dive_concurrency} ==='
     )
     started = time.monotonic()
     results = asyncio.run(_run_all(keys, params, out_dir, args.concurrency))
