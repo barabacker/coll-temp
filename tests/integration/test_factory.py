@@ -1,14 +1,18 @@
-"""build_http_client wires hooks and TLS from the parser class, engine-agnostic."""
+"""The HTTP client a platform parser gets is assembled from what it declares.
+
+The generic wiring is the framework's own test; this covers the three sites
+whose declarations carry real quirks: the inprotect challenge, an expired
+certificate, and a missing intermediate certificate.
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
 import pytest
+from collector import BaseParser, build_http_client, get_parser
 
-from collector.core.registry import get_parser
-from collector.core.spider import BaseParser
-from collector.sources.fogsoft.inprotect import solve_inprotect
+from tenders.sources.fogsoft.inprotect import solve_inprotect
 
 # Parser classes are built from platforms.toml and reached via the registry.
 ArbBitLotParser = get_parser('arbbitlot')
@@ -35,38 +39,31 @@ def captured(monkeypatch):
         async def close(self) -> None:  # pragma: no cover
             pass
 
+    def _fake_bundle(path: str) -> str:
+        seen['cert_path'] = path
+        return '/tmp/fake-bundle.pem'
+
     monkeypatch.setattr('collector.http.factory.AsyncSession', _FakeSession)
-    monkeypatch.setattr(
-        'collector.http.factory.ca_bundle_with_extra_cert',
-        lambda path: seen.setdefault('cert_path', path) or '/tmp/fake-bundle.pem',
-    )
+    monkeypatch.setattr('collector.http.factory.ca_bundle_with_extra_cert', _fake_bundle)
     return seen
 
 
 def test_fogsoft_parser_gets_inprotect_hook(captured):
-    from collector.http.factory import build_http_client
-
     client = build_http_client(CenterrParser)
     assert solve_inprotect in client.middleware.response_middleware
 
 
 def test_bare_parser_has_no_inprotect_hook(captured):
-    from collector.http.factory import build_http_client
-
     client = build_http_client(_Bare)
     assert solve_inprotect not in client.middleware.response_middleware
 
 
 def test_skip_tls_verify_disables_verification(captured):
-    from collector.http.factory import build_http_client
-
     build_http_client(ArbBitLotParser)
     assert captured['session_kwargs'].get('verify') is False
 
 
 def test_extra_ca_cert_resolved_against_parser_module(captured):
-    from collector.http.factory import build_http_client
-
     build_http_client(MetaInvestParser)
     cert_path = captured['cert_path'].replace('\\', '/')
     assert cert_path.endswith(

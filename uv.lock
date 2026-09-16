@@ -85,6 +85,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "certifi" },
+    { name = "collector-framework" },
     { name = "curl-cffi" },
     { name = "parsel" },
     { name = "pydantic" },
@@ -100,6 +101,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "certifi", specifier = ">=2026.7.22" },
+    { name = "collector-framework", editable = "collector-framework" },
     { name = "curl-cffi", specifier = ">=0.15.0" },
     { name = "parsel", specifier = ">=1.11.0" },
     { name = "pydantic", specifier = ">=2" },
@@ -110,6 +112,32 @@ requires-dist = [
 dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
+]
+
+[[package]]
+name = "collector-framework"
+version = "0.1.0"
+source = { editable = "collector-framework" }
+dependencies = [
+    { name = "certifi" },
+    { name = "curl-cffi" },
+    { name = "parsel" },
+    { name = "tenacity" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "certifi", specifier = ">=2024.2.2" },
+    { name = "curl-cffi", specifier = ">=0.7" },
+    { name = "parsel", specifier = ">=1.9" },
+    { name = "tenacity", specifier = ">=8.2" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "ruff" },
 ]
 
 [[package]]

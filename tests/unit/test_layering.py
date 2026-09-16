@@ -1,23 +1,17 @@
-"""Layer dependency invariant: core <- http <- sources, entrypoint on top.
+"""Layer dependency invariants: framework <- domain core <- sources.
 
-Guards the architectural claim of the restructure so a future edit cannot
-silently reintroduce an upward runtime import (see design doc section 3).
+Guards the boundary the framework extraction established, so a future edit
+cannot quietly import the domain back into the engine — the thing that would
+make the split meaningless.
 """
 
 from __future__ import annotations
 
 import ast
-import inspect
 from pathlib import Path
 
-import collector.runner
-
-
-def test_runner_does_not_import_sources():
-    src = inspect.getsource(collector.runner)
-    assert 'collector.sources' not in src
-    assert 'fogsoft' not in src
-    assert '_FOGSOFT_DIR' not in src
+import collector
+import tenders
 
 
 def _runtime_imports(module_path: Path) -> list[str]:
@@ -46,21 +40,35 @@ def _runtime_imports(module_path: Path) -> list[str]:
     return names
 
 
-_SRC = Path(collector.__file__).parent
+_FRAMEWORK = Path(collector.__file__).parent
+_DOMAIN = Path(tenders.__file__).parent
 
 
-def test_core_has_no_runtime_dependency_on_http_or_sources():
-    for py in sorted((_SRC / 'core').rglob('*.py')):
+def test_framework_knows_nothing_about_the_domain():
+    """The whole point of the extraction: collector must stand alone."""
+    for py in sorted(_FRAMEWORK.rglob('*.py')):
         for imported in _runtime_imports(py):
-            assert not imported.startswith('collector.http'), f'{py.name} runtime-imports {imported}'
+            assert not imported.startswith('tenders'), f'{py.name} runtime-imports {imported}'
+
+
+def test_domain_core_does_not_import_sources():
+    """Engines may depend on core; core may not depend on an engine."""
+    for py in sorted((_DOMAIN / 'core').rglob('*.py')):
+        for imported in _runtime_imports(py):
             assert not imported.startswith(
-                'collector.sources'
+                'tenders.sources'
             ), f'{py.name} runtime-imports {imported}'
 
 
-def test_http_has_no_runtime_dependency_on_sources():
-    for py in sorted((_SRC / 'http').rglob('*.py')):
+def test_domain_core_does_not_reach_into_the_http_layer():
+    """Core speaks to the network only through the parser the framework gives it."""
+    for py in sorted((_DOMAIN / 'core').rglob('*.py')):
         for imported in _runtime_imports(py):
             assert not imported.startswith(
-                'collector.sources'
+                'collector.http'
             ), f'{py.name} runtime-imports {imported}'
+
+
+def test_runner_does_not_import_sources():
+    for imported in _runtime_imports(_DOMAIN / 'runner.py'):
+        assert not imported.startswith('tenders.sources')

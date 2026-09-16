@@ -6,10 +6,10 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-from collector.core.lot import Lot
-from collector.core.spider import ParserContext
-from collector.core.storage.contracts import ChangeStatus
-from collector.core.registry import get_parser
+from collector import ParserContext, get_parser
+
+from tenders.core.lot import Lot
+from tenders.core.storage.contracts import ChangeStatus
 
 FIX = Path(__file__).parents[1] / 'fixtures' / 'kendo'
 LISTING = (FIX / 'listing_page1.html').read_text(encoding='utf-8')
@@ -51,7 +51,7 @@ class _Sink:
 def test_kendo_crawl_expands_trades_into_lots():
     sink = _Sink()
     http = _FakeHttp()
-    ctx = ParserContext(http=http, params={'max_pages': '1'}, lot_sink=sink)
+    ctx = ParserContext(http=http, params={'max_pages': '1'}, sink=sink)
     parser = get_parser('trade_alliance')(ctx)
 
     total = asyncio.run(parser.crawl())
@@ -79,7 +79,7 @@ def test_kendo_crawl_is_correct_under_higher_concurrency():
     ctx = ParserContext(
         http=_FakeHttp(),
         params={'max_pages': '1', 'concurrency': '5'},
-        lot_sink=sink,
+        sink=sink,
     )
     total = asyncio.run(get_parser('trade_alliance')(ctx).crawl())
 

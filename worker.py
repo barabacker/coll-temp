@@ -29,11 +29,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from collector import get_parser, registry  # noqa: E402
-from collector.core.lot import Lot  # noqa: E402
-from collector.core.spider import ParserContext  # noqa: E402
-from collector.core.storage.contracts import ChangeStatus  # noqa: E402
-from collector.http.factory import build_http_client  # noqa: E402
+from collector import ParserContext, build_http_client  # noqa: E402
+
+from tenders import ChangeStatus, Lot, get_parser, registry  # noqa: E402
 
 logger = logging.getLogger('worker')
 
@@ -76,7 +74,7 @@ async def _run_site(key: str, params: dict[str, str], out_dir: Path, sem: asynci
         try:
             http = build_http_client(parser_cls)
             async with http:
-                ctx = ParserContext(http=http, params=params, lot_sink=sink, log=_log)
+                ctx = ParserContext(http=http, params=params, sink=sink, log=_log)
                 parser = parser_cls(ctx)
                 await parser.crawl()
         except Exception as exc:  # noqa: BLE001 — isolate one site's failure
@@ -102,8 +100,8 @@ async def _run_all(keys: list[str], params: dict[str, str], out_dir: Path, concu
 
 
 def _keys_for_engine(engine: str) -> list[str]:
-    """Registered keys whose parser class lives in collector.sources.<engine>."""
-    prefix = f'collector.sources.{engine}.'
+    """Registered keys whose parser class lives in tenders.sources.<engine>."""
+    prefix = f'tenders.sources.{engine}.'
     return sorted(k for k, cls in registry().items() if cls.__module__.startswith(prefix))
 
 

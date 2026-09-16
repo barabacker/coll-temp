@@ -6,7 +6,7 @@ from pathlib import Path
 
 from parsel import Selector
 
-from collector.sources.ruson.parsing.detail import parse_lots
+from tenders.sources.ruson.parsing.detail import parse_lots
 
 FIXTURE = Path(__file__).parents[2] / 'fixtures' / 'ruson' / 'nistp_detail.html'
 

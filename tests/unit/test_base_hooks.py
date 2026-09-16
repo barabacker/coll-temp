@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collector.core.spider import BaseParser
-from collector.sources.fogsoft.base import TenderFogsoft
-from collector.sources.fogsoft.inprotect import solve_inprotect
+from collector import BaseParser
+from tenders.sources.fogsoft.base import TenderFogsoft
+from tenders.sources.fogsoft.inprotect import solve_inprotect
 
 
 def test_base_parser_defaults():

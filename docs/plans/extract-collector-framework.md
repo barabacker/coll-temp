@@ -1,6 +1,6 @@
 # Plan: extract the scraping micro-framework into `collector`
 
-Status: proposed (awaiting go-ahead)
+Status: steps 1-5 done; step 6 (moving the directory into its own repo) is manual
 Branch: `claude/clever-volta-jlw1br`
 
 ## Decisions (agreed with the owner)
@@ -85,6 +85,15 @@ Public API v0.1.0: `BaseParser`, `Request`, `Response`, `ParserContext`,
    with `--max-pages 1` on a single site.
 6. **Push** the branch. Moving `collector-framework/` into its own GitHub repo is a
    separate, mechanical step done afterwards (git subtree split or plain copy).
+
+   Once the repo exists, replace the local source in `pyproject.toml`:
+
+   ```toml
+   [tool.uv.sources]
+   collector-framework = { git = "https://github.com/barabacker/collector-framework", tag = "v0.1.0" }
+   ```
+
+   and delete the staged `collector-framework/` directory from this repo.
 
 ## 5. Risks
 

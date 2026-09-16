@@ -6,8 +6,8 @@ import tomllib
 
 import pytest
 
-from collector.core.registry import get_parser, registry
-from collector.platforms import CONFIG_PATH, ENGINES, build_parser
+from collector import get_parser, registry
+from tenders.platforms import CONFIG_PATH, ENGINES, build_parser
 
 
 def _specs() -> list[dict]:
@@ -42,10 +42,10 @@ def test_per_site_overrides_are_applied():
 
 def test_generated_class_module_points_at_its_engine():
     # http.factory resolves EXTRA_CA_CERT relative to the class's module file,
-    # so a generated class must report its engine package, not collector.platforms.
+    # so a generated class must report its engine package, not tenders.platforms.
     cls = get_parser('meta_invest')
-    assert cls.__module__ == 'collector.sources.fogsoft.base'
-    assert get_parser('nistp').__module__ == 'collector.sources.ruson.base'
+    assert cls.__module__ == 'tenders.sources.fogsoft.base'
+    assert get_parser('nistp').__module__ == 'tenders.sources.ruson.base'
 
 
 def test_build_parser_rejects_unknown_engine():

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from parsel import Selector
 
-from collector.sources.btorg.parsing.listing import (
+from tenders.sources.btorg.parsing.listing import (
     find_next_page,
     parse_listing,
     parse_price,

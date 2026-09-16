@@ -7,7 +7,7 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
-from collector.core.lot import Lot
+from tenders.core.lot import Lot
 
 # A maximal (fogsoft-shaped) emitted item — every one of the 17 keys.
 FULL_ITEM = {

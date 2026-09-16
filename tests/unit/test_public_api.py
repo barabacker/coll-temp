@@ -1,9 +1,9 @@
-"""Behavior held invariant across the restructure: the public facade and the
-populated parser registry. Must stay green at every step."""
+"""Behavior held invariant across the restructure: the ``tenders`` facade and
+the populated parser registry. Must stay green at every step."""
 
 from __future__ import annotations
 
-import collector
+import tenders
 
 EXPECTED_KEYS = {
     'centerr', 'alfalot', 'etpu_bankrupt', 'bep', 'arbbitlot', 'arbitat',
@@ -19,15 +19,16 @@ def test_facade_exports_are_importable():
     for name in (
         'BaseParser', 'ParserContext', 'Request', 'Response', 'LotSink',
         'ParserNotFound', 'get_parser', 'register_parser', 'registry',
-        'CrawlResult', 'run_parser',
+        'CrawlResult', 'run_parser', 'Lot', 'LotParser', 'DiveParser',
+        'ChangeStatus',
     ):
-        assert hasattr(collector, name), f'missing facade export: {name}'
+        assert hasattr(tenders, name), f'missing facade export: {name}'
 
 
 def test_registry_is_fully_populated():
-    assert set(collector.registry()) == EXPECTED_KEYS
+    assert set(tenders.registry()) == EXPECTED_KEYS
 
 
 def test_get_parser_resolves_a_known_key():
-    cls = collector.get_parser('centerr')
+    cls = tenders.get_parser('centerr')
     assert cls.name == 'centerr'

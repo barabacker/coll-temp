@@ -1,6 +1,6 @@
 """Локальный запуск одного парсера площадки — посмотреть, что собирается.
 
-Песочница: движок collector (пакет в корне репо) без Django. Хранилище здесь —
+Песочница: пакет tenders на движке collector, без Django. Хранилище здесь —
 простой CollectingSink, который копит лоты в память и пишет их в lots.json.
 В боевом проекте вместо него ORM-реализация, пишущая в Postgres.
 
@@ -18,16 +18,16 @@ import logging
 import sys
 from pathlib import Path
 
-# корень репо на путь импорта, чтобы работал `import collector`.
+# корень репо на путь импорта, чтобы работал `import tenders`.
 sys.path.insert(0, str(Path(__file__).parent))
 
-from collector import ParserNotFound, get_parser, registry, run_parser  # noqa: E402
-from collector.core.lot import Lot  # noqa: E402
-from collector.core.storage.contracts import ChangeStatus  # noqa: E402
+from tenders import ParserNotFound, get_parser, registry, run_parser  # noqa: E402
+from tenders.core.lot import Lot  # noqa: E402
+from tenders.core.storage.contracts import ChangeStatus  # noqa: E402
 
 
 class CollectingSink:
-    """Минимальная реализация интерфейса collector.sink.LotSink.
+    """Минимальная реализация интерфейса tenders.core.storage.sink.LotSink.
 
     Копит лоты в памяти. get_fingerprints возвращает пусто => каждый лот
     считается новым и парсер ныряет в его detail-страницу, так что в собранных

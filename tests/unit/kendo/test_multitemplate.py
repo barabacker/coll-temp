@@ -16,8 +16,8 @@ from pathlib import Path
 
 from parsel import Selector
 
-from collector.sources.kendo.parsing.detail import parse_lots
-from collector.sources.kendo.parsing.listing import parse_listing
+from tenders.sources.kendo.parsing.detail import parse_lots
+from tenders.sources.kendo.parsing.listing import parse_listing
 
 FIX = Path(__file__).parents[2] / 'fixtures' / 'kendo'
 

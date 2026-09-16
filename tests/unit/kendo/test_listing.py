@@ -6,7 +6,7 @@ from pathlib import Path
 
 from parsel import Selector
 
-from collector.sources.kendo.parsing.listing import (
+from tenders.sources.kendo.parsing.listing import (
     find_next_page,
     parse_listing,
     read_max_pages,

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collector.core.registry import get_parser, registry
-from collector.sources.ruson.base import TenderRuson
+from collector import get_parser, registry
+from tenders.sources.ruson.base import TenderRuson
 
 RUSON_KEYS = {'nistp', 'el_torg', 'rus_on', 'sistematorg', 'promkonsalt'}
 

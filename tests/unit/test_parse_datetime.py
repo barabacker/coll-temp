@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from collector.core.parsing import parse_datetime
+from tenders.core.parsing import parse_datetime
 
 
 def test_all_observed_formats():
