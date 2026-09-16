@@ -1,19 +1,14 @@
-"""register_parser / get_parser / registry."""
+"""The parser registry: register / get / list, keyed by parser name."""
 
 from __future__ import annotations
 
 from typing import Any
 
 import pytest
+from collector import BaseParser
 
-from collector import (
-    BaseParser,
-    ParserNotFound,
-    get_parser,
-    register_parser,
-    registry,
-    unregister_parser,
-)
+from tenders import ParserNotFound, get_parser, register_parser, registry
+from tenders.registry import _REGISTRY
 
 
 class _Parser(BaseParser):
@@ -24,10 +19,14 @@ class _Parser(BaseParser):
 
 
 @pytest.fixture
-def demo():
-    register_parser('demo')(_Parser)
-    yield _Parser
-    unregister_parser('demo')
+def demo(monkeypatch):
+    """Register a throwaway parser without leaking it into other tests.
+
+    Reaches into the private dict on purpose: the public API has no way to undo
+    a registration, and adding one just for tests is what we removed.
+    """
+    monkeypatch.setitem(_REGISTRY, 'demo', _Parser)
+    return _Parser
 
 
 def test_get_parser_returns_the_registered_class(demo):

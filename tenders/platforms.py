@@ -13,8 +13,9 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from collector import BaseParser, register_parser
+from collector import BaseParser
 
+from tenders.registry import register_parser
 from tenders.sources.btorg.base import TenderBtorg
 from tenders.sources.fogsoft.base import TenderFogsoft
 from tenders.sources.kendo.base import TenderKendo

@@ -1,8 +1,8 @@
 # collector
 
-A tiny async scraping framework: Spider-style parsers, a `curl_cffi` HTTP layer
-with middleware, and a parser registry. Under 1000 lines — small enough to read
-in one sitting, and it stays out of your domain model.
+A tiny async scraping framework: Spider-style parsers over a `curl_cffi` HTTP
+layer with middleware, retries and throttling. Under 900 lines — small enough to
+read in one sitting, and it stays out of your domain model.
 
 ```python
 from collector import BaseParser, Settings, collect
@@ -56,15 +56,15 @@ browser impersonation via `curl_cffi` for sites that fingerprint TLS.
   spaces requests out behind a lock, so the gap holds with `concurrency > 1`.
 - **Response helpers** — `selector()` (parsel), `json()`, `urljoin()` and
   `follow()` for a link on the page.
-- **Registry** — `@register_parser('key')` / `get_parser('key')`, so a job can
-  name a parser by string.
 - **Param readers** — `read_max_pages`, `read_concurrency`, `read_flag`: the
   knobs arrive as strings and a bad value falls back instead of raising.
 
 ## What you do not get, by design
 
 No item schema, no storage, no scheduler, no request de-duplication, no
-robots.txt. The framework never persists anything: override `process_item()` and
+robots.txt, and no registry — how an application names and looks up a parser is
+its own business, and a library holding global mutable state for it is a cost,
+not a feature. The framework never persists anything: override `process_item()` and
 write to `ctx.sink`, which it passes through untouched.
 
 ```python

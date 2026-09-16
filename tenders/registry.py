@@ -1,10 +1,17 @@
-"""Parser registry: ``register_parser`` / ``get_parser``, keyed by parser name."""
+"""Parser registry: ``register_parser`` / ``get_parser``, keyed by parser name.
+
+Which parser a job runs is named by a string (a CLI argument, a job payload, a
+Platform row), so the keys have to resolve to classes somewhere. That somewhere
+is here and not the framework: the mapping is how *this* application is wired
+(platforms.toml builds it), and a registry is global mutable state that a
+library has no business owning.
+"""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 
-from collector.spider import BaseParser
+from collector import BaseParser
 
 _REGISTRY: dict[str, type[BaseParser]] = {}
 
@@ -40,8 +47,3 @@ def get_parser(name: str) -> type[BaseParser]:
 def registry() -> dict[str, type[BaseParser]]:
     """Return a copy of the registry ``{key: parser_cls}``."""
     return dict(_REGISTRY)
-
-
-def unregister_parser(name: str) -> None:
-    """Drop a registration. Mostly useful to keep tests isolated."""
-    _REGISTRY.pop(name, None)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collector import get_parser, registry
+from tenders import get_parser, registry
 from tenders.sources.kendo.base import TenderKendo
 
 KENDO_KEYS = {'trade_alliance', 'seltim', 'electro_torgi', 'torgi82', 'vetp'}

@@ -10,8 +10,9 @@ from parsel import Selector
 
 from tenders.core.lot import Lot
 from tenders.core.parsing import is_active_status
-from collector import get_parser
 from collector import ParserContext
+
+from tenders import get_parser
 from tenders.core.storage.contracts import ChangeStatus
 from tenders.sources.ruson.parsing.listing import parse_listing
 

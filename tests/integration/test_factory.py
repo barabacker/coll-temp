@@ -10,7 +10,9 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from collector import BaseParser, build_http_client, get_parser
+from collector import BaseParser, build_http_client
+
+from tenders import get_parser
 
 from tenders.sources.fogsoft.inprotect import solve_inprotect
 

@@ -6,7 +6,9 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-from collector import ParserContext, get_parser
+from collector import ParserContext
+
+from tenders import get_parser
 
 from tenders.core.lot import Lot
 from tenders.core.storage.contracts import ChangeStatus

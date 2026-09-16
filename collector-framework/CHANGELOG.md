@@ -28,6 +28,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed
 
+- The parser registry (`register_parser`, `get_parser`, `registry`,
+  `unregister_parser`, `ParserNotFound`). Nothing in the framework used it, and
+  it was the package's only global mutable state — how an application maps a
+  name to a parser class belongs to that application.
 - The `tenacity` dependency.
 
 ## [0.1.0] — unreleased
@@ -40,8 +44,6 @@ First extraction from the scraper it grew in.
   `Response` and `ParserContext`.
 - HTTP layer: `HttpClient` (curl_cffi + tenacity retries), `Middleware` with
   request/response hooks, `build_http_client`, `ca_bundle_with_extra_cert`.
-- Parser registry: `register_parser`, `get_parser`, `registry`,
-  `unregister_parser`, `ParserNotFound`.
 - Runner: `run_parser` (sync) and `crawl` (async), both returning the finished
   parser instance.
 - Param readers `read_max_pages`, `read_concurrency`, `read_flag` and the text

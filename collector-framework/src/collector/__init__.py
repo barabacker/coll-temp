@@ -5,6 +5,9 @@ and implement ``parse()`` as an async generator that yields ``Request`` objects
 to follow and items to emit. ``run_parser`` assembles the HTTP client the parser
 declares (impersonation, TLS quirks, response hooks) and runs the crawl.
 
+Parsers are plain classes: how an application names and looks one up — a
+registry, entry points, a dict — is its own business, not this package's.
+
 The framework stores nothing and knows no item schema: override
 ``process_item()`` to do something with what a parser emits, or call
 ``collect()`` to get the items back as a list.
@@ -22,13 +25,6 @@ from collector.http import (
     ca_bundle_with_extra_cert,
 )
 from collector.params import read_concurrency, read_flag, read_max_pages
-from collector.registry import (
-    ParserNotFound,
-    get_parser,
-    register_parser,
-    registry,
-    unregister_parser,
-)
 from collector.runner import collect, crawl, run_parser
 from collector.settings import DEFAULT_RETRY_STATUSES, RetryPolicy, Settings
 from collector.spider import BaseParser, ParserContext, Request, Response
@@ -42,7 +38,6 @@ __all__ = [
     'HttpClient',
     'Middleware',
     'ParserContext',
-    'ParserNotFound',
     'Request',
     'RequestHook',
     'Response',
@@ -56,12 +51,8 @@ __all__ = [
     'clean',
     'collect',
     'crawl',
-    'get_parser',
     'read_concurrency',
     'read_flag',
     'read_max_pages',
-    'register_parser',
-    'registry',
     'run_parser',
-    'unregister_parser',
 ]

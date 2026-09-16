@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collector import get_parser, registry
+from tenders import get_parser, registry
 from tenders.sources.btorg.base import TenderBtorg
 
 BTORG_KEYS = {'atctrade', 'ausib', 'etp_profit', 'aukcioncenter', 'regtorg', 'ptp_center'}

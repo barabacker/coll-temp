@@ -6,7 +6,7 @@ import tomllib
 
 import pytest
 
-from collector import get_parser, registry
+from tenders import get_parser, registry
 from tenders.platforms import CONFIG_PATH, ENGINES, build_parser
 
 
