@@ -6,7 +6,8 @@ to follow and items to emit. ``run_parser`` assembles the HTTP client the parser
 declares (impersonation, TLS quirks, response hooks) and runs the crawl.
 
 The framework stores nothing and knows no item schema: override
-``process_item()`` to do something with what a parser emits.
+``process_item()`` to do something with what a parser emits, or call
+``collect()`` to get the items back as a list.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from collector.http import (
     Middleware,
     RequestHook,
     ResponseHook,
+    Throttle,
     build_http_client,
     ca_bundle_with_extra_cert,
 )
@@ -27,13 +29,15 @@ from collector.registry import (
     registry,
     unregister_parser,
 )
-from collector.runner import crawl, run_parser
+from collector.runner import collect, crawl, run_parser
+from collector.settings import DEFAULT_RETRY_STATUSES, RetryPolicy, Settings
 from collector.spider import BaseParser, ParserContext, Request, Response
 from collector.text import clean
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 __all__ = [
+    'DEFAULT_RETRY_STATUSES',
     'BaseParser',
     'HttpClient',
     'Middleware',
@@ -43,10 +47,14 @@ __all__ = [
     'RequestHook',
     'Response',
     'ResponseHook',
+    'RetryPolicy',
+    'Settings',
+    'Throttle',
     '__version__',
     'build_http_client',
     'ca_bundle_with_extra_cert',
     'clean',
+    'collect',
     'crawl',
     'get_parser',
     'read_concurrency',

@@ -6,7 +6,7 @@ from typing import Any
 
 from tests.conftest import FakeHttp
 
-from collector import BaseParser, crawl, run_parser
+from collector import BaseParser, collect, crawl, run_parser
 
 URL = 'https://example.test/'
 
@@ -81,3 +81,51 @@ async def test_crawl_is_the_async_entry_point(monkeypatch):
     _patch_client(monkeypatch)
     parser = await crawl(_Counting, sink=[])
     assert parser.item_count == 1
+
+
+def test_collect_returns_the_items(monkeypatch):
+    _patch_client(monkeypatch)
+
+    class _Plain(BaseParser):
+        name = 'plain'
+        start_urls = [URL]
+
+        async def parse(self, response: Any):
+            yield {'url': response.request.url}
+            yield {'url': response.request.url + '#2'}
+
+    assert collect(_Plain) == [{'url': URL}, {'url': URL + '#2'}]
+
+
+def test_collect_keeps_the_parsers_own_process_item(monkeypatch):
+    """Subclassing must not cost the parser its own item handling."""
+    _patch_client(monkeypatch)
+    tagged: list[Any] = []
+
+    class _Tagging(BaseParser):
+        name = 'tagging'
+        start_urls = [URL]
+
+        async def parse(self, response: Any):
+            yield {'url': response.request.url}
+
+        async def process_item(self, item: Any) -> None:
+            await super().process_item(item)
+            tagged.append(item)
+
+    assert collect(_Tagging) == [{'url': URL}]
+    assert tagged == [{'url': URL}]
+
+
+def test_collect_reports_the_original_parser_name(monkeypatch):
+    _patch_client(monkeypatch)
+
+    class _Plain(BaseParser):
+        name = 'plain'
+        start_urls = [URL]
+
+        async def parse(self, response: Any):
+            yield {'ok': True}
+
+    collect(_Plain)
+    assert _Plain.__name__ == '_Plain'

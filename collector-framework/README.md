@@ -1,17 +1,17 @@
 # collector
 
 A tiny async scraping framework: Spider-style parsers, a `curl_cffi` HTTP layer
-with middleware, and a parser registry. Roughly 450 lines — small enough to read
+with middleware, and a parser registry. Under 1000 lines — small enough to read
 in one sitting, and it stays out of your domain model.
 
 ```python
-from collector import BaseParser, run_parser
+from collector import BaseParser, Settings, collect
 
 
 class Quotes(BaseParser):
     name = 'quotes'
     start_urls = ['https://quotes.toscrape.com/']
-    concurrency = 4
+    settings = Settings(concurrency=4, delay=0.5)
 
     async def parse(self, response):
         for quote in response.selector().css('div.quote'):
@@ -22,11 +22,11 @@ class Quotes(BaseParser):
 
         next_page = response.selector().css('li.next a::attr(href)').get()
         if next_page:
-            yield self.request(response.request.url.rstrip('/') + next_page)
+            yield response.follow(next_page)
 
 
-parser = run_parser(Quotes)
-print(parser.item_count)
+for quote in collect(Quotes):
+    print(quote['author'])
 ```
 
 ## Why it exists
@@ -41,14 +41,21 @@ browser impersonation via `curl_cffi` for sites that fingerprint TLS.
 - **`BaseParser`** — `parse()` is an async generator: yield a `Request` to
   follow, yield anything else to emit it as an item. `crawl()` runs a queue with
   `concurrency` workers, collects per-request errors instead of killing a worker,
-  and re-raises the first one at the end.
-- **HTTP layer** — `curl_cffi` with Chrome impersonation, `tenacity` retries
-  (4 attempts, exponential 1–60s) and request/response middleware. A response
-  hook can `await retry()` to re-run a request, which is how an anti-bot
-  challenge gets solved without the parser knowing.
-- **Per-parser HTTP declarations** — `EXTRA_CA_CERT` (a site that omits an
-  intermediate certificate), `SKIP_TLS_VERIFY`, `RESPONSE_HOOKS`. The client is
-  assembled from the class, so the caller does not carry site quirks.
+  and re-raises the first one at the end. `start_requests()` covers a start that
+  a URL cannot express — a POST, or per-start metadata.
+- **`Settings`** — one frozen dataclass per parser holding proxy, timeout,
+  impersonation, headers, TLS quirks, pacing, retry policy and hooks. A subclass
+  narrows its parent's with `dataclasses.replace`. The HTTP client is assembled
+  from it, so the caller never carries site quirks.
+- **One retry policy** — `RetryPolicy` covers both failure modes with a single
+  attempt budget: transport errors and retryable statuses (429 and the 5xx
+  family), with exponential backoff and `Retry-After` honoured up to a cap you
+  set. A response hook can separately `await retry()` to re-run a request, which
+  is how an anti-bot challenge gets solved without the parser knowing.
+- **Throttling** — `delay` and `delay_jitter` install a `Throttle` hook that
+  spaces requests out behind a lock, so the gap holds with `concurrency > 1`.
+- **Response helpers** — `selector()` (parsel), `json()`, `urljoin()` and
+  `follow()` for a link on the page.
 - **Registry** — `@register_parser('key')` / `get_parser('key')`, so a job can
   name a parser by string.
 - **Param readers** — `read_max_pages`, `read_concurrency`, `read_flag`: the
@@ -56,9 +63,9 @@ browser impersonation via `curl_cffi` for sites that fingerprint TLS.
 
 ## What you do not get, by design
 
-No item schema, no storage, no scheduler, no deduplication, no robots.txt or
-throttling policy. The framework never persists anything: override
-`process_item()` and write to `ctx.sink`, which it passes through untouched.
+No item schema, no storage, no scheduler, no request de-duplication, no
+robots.txt. The framework never persists anything: override `process_item()` and
+write to `ctx.sink`, which it passes through untouched.
 
 ```python
 class Saving(Quotes):
@@ -77,7 +84,7 @@ Requires Python 3.11+.
 
 ## Status
 
-`0.1.0`, extracted from a production scraper that runs ~30 sites. The API is
+`0.2.0`, extracted from a production scraper that runs ~30 sites. The API is
 young: minor versions may break it until `1.0`.
 
 ## License

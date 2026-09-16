@@ -4,6 +4,32 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] — unreleased
+
+### Added
+
+- `Settings` — one frozen dataclass per parser for proxy, timeout,
+  impersonation, headers, TLS, pacing, retry policy and hooks; a subclass
+  narrows its parent's with `dataclasses.replace`.
+- `RetryPolicy` — retryable statuses (429, 5xx) alongside transport errors under
+  one attempt budget, with `Retry-After` honoured up to `max_retry_after`.
+- `Throttle` request hook, installed by `delay` / `delay_jitter`; it holds the
+  gap behind a lock, so it survives `concurrency > 1`.
+- `BaseParser.start_requests()` for starts a URL cannot express.
+- `Response.json()`, `Response.urljoin()`, `Response.follow()`.
+- `collect(parser_cls)` — run a crawl and get the items back as a list.
+
+### Changed
+
+- **Breaking**: `concurrency`, `EXTRA_CA_CERT`, `SKIP_TLS_VERIFY` and
+  `RESPONSE_HOOKS` move into `settings = Settings(...)`.
+- Retries are an explicit loop in `HttpClient.request` rather than a `tenacity`
+  decorator, which is what lets one budget cover both failure modes.
+
+### Removed
+
+- The `tenacity` dependency.
+
 ## [0.1.0] — unreleased
 
 First extraction from the scraper it grew in.

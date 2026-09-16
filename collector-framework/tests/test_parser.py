@@ -122,3 +122,46 @@ async def test_log_writes_through_the_context(ctx_factory):
     await _Logging(ctx).crawl()
 
     assert lines == [f'visited {PAGE_1}']
+
+
+async def test_start_requests_defaults_to_start_urls(ctx_factory):
+    ctx, _ = ctx_factory(FakeHttp())
+    reqs = [req async for req in _TwoPages(ctx).start_requests()]
+    assert [r.url for r in reqs] == [PAGE_1]
+
+
+async def test_start_requests_can_be_overridden(ctx_factory):
+    class _PostStart(BaseParser):
+        name = 'post_start'
+
+        async def start_requests(self):
+            yield self.request(PAGE_1, method='POST', data={'q': '1'}, metadata={'seed': True})
+
+        async def parse(self, response: Any):
+            yield {'seed': response.metadata['seed'], 'method': response.request.method}
+
+    seen: list[Any] = []
+
+    class _Collecting(_PostStart):
+        async def process_item(self, item: Any) -> None:
+            seen.append(item)
+
+    http = FakeHttp()
+    ctx, _ = ctx_factory(http)
+    await _Collecting(ctx).crawl()
+
+    assert seen == [{'seed': True, 'method': 'POST'}]
+    assert http.calls == [('POST', PAGE_1)]
+
+
+async def test_settings_concurrency_is_the_default_and_params_win(ctx_factory):
+    from dataclasses import replace
+
+    class _Parallel(_TwoPages):
+        settings = replace(_TwoPages.settings, concurrency=4)
+
+    ctx, _ = ctx_factory(FakeHttp())
+    assert _Parallel(ctx).settings.concurrency == 4
+
+    ctx, _ = ctx_factory(FakeHttp(), params={'concurrency': '2'})
+    assert await _Parallel(ctx).crawl() == 2

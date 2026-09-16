@@ -18,6 +18,7 @@ class FakeResponse:
     status_code: int = 200
     url: str = 'https://example.test/'
     content: bytes = b''
+    headers: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass

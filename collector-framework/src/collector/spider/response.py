@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json as jsonlib
 from typing import Any
+from urllib.parse import urljoin
 
 from parsel import Selector
 
@@ -31,3 +33,35 @@ class Response:
 
     def selector(self) -> Selector:
         return Selector(text=self.text)
+
+    def json(self) -> Any:
+        """Parse the body as JSON."""
+        return jsonlib.loads(self.text)
+
+    def urljoin(self, href: str) -> str:
+        """Resolve a link found on this page against the URL it came from."""
+        return urljoin(self.request.url, href)
+
+    def follow(
+        self,
+        href: str,
+        *,
+        method: str = 'GET',
+        callback: Any = None,
+        metadata: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        data: dict[str, str] | str | None = None,
+    ) -> Request:
+        """Build a ``Request`` for a link on this page, resolving it first.
+
+        ``callback`` left as None means the parser's ``parse()``, the same
+        default a request built by the parser itself gets.
+        """
+        return Request(
+            url=self.urljoin(href),
+            method=method,
+            callback=callback,
+            metadata=metadata or {},
+            headers=headers,
+            data=data,
+        )

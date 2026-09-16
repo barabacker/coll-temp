@@ -5,15 +5,13 @@ from __future__ import annotations
 import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Callable
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import Any, ClassVar
 
 from collector.params import read_concurrency
+from collector.settings import Settings
 from collector.spider.context import ParserContext
 from collector.spider.request import Request
 from collector.spider.response import Response
-
-if TYPE_CHECKING:
-    from collector.http.middleware import ResponseHook
 
 
 class BaseParser(ABC):
@@ -23,22 +21,14 @@ class BaseParser(ABC):
     async generator: yield a ``Request`` to enqueue it, yield anything else to
     emit it as an item.
 
-    The class attributes below are read by ``collector.http.build_http_client``
-    when it assembles the client for this parser, so a parser declares its own
-    HTTP quirks instead of the caller knowing about them.
+    ``settings`` is how a parser declares its own HTTP quirks (proxy, timeout,
+    TLS, pacing, hooks) instead of the caller knowing about them; a subclass
+    narrows its parent's with ``dataclasses.replace``.
     """
 
     name: ClassVar[str]
     start_urls: ClassVar[list[str]] = []
-    concurrency: ClassVar[int] = 1
-    #: PEM file with an extra CA/intermediate certificate, resolved relative to
-    #: the file the parser class is defined in.
-    EXTRA_CA_CERT: ClassVar[str | None] = None
-    #: Disable TLS verification outright. Only for a certificate that is broken
-    #: on the site's side and that no CA bundle can fix.
-    SKIP_TLS_VERIFY: ClassVar[bool] = False
-    #: Response hooks added to this parser's client (e.g. an anti-bot solver).
-    RESPONSE_HOOKS: ClassVar[tuple[ResponseHook, ...]] = ()
+    settings: ClassVar[Settings] = Settings()
 
     def __init__(self, ctx: ParserContext) -> None:
         self.ctx = ctx
@@ -66,6 +56,15 @@ class BaseParser(ABC):
             data=data,
         )
 
+    async def start_requests(self) -> AsyncIterator[Request]:
+        """The requests a crawl begins with. Defaults to ``start_urls``.
+
+        Override it when a crawl starts with something a URL cannot express — a
+        POST, a per-start ``metadata``, or a list read at runtime.
+        """
+        for url in self.start_urls:
+            yield self.request(url)
+
     @abstractmethod
     def parse(self, response: Response) -> AsyncIterator[Request | Any]:
         """yield ``Request`` to enqueue; yield anything else to emit an item."""
@@ -92,8 +91,8 @@ class BaseParser(ABC):
         page neither kills a worker nor passes silently.
         """
         queue: asyncio.Queue[Request] = asyncio.Queue()
-        for url in self.start_urls:
-            queue.put_nowait(self.request(url))
+        async for req in self.start_requests():
+            queue.put_nowait(req)
 
         async def worker() -> None:
             while True:
@@ -105,7 +104,7 @@ class BaseParser(ABC):
                 finally:
                     queue.task_done()
 
-        n_workers = read_concurrency(self.ctx.params, self.concurrency)
+        n_workers = read_concurrency(self.ctx.params, self.settings.concurrency)
         workers = [asyncio.create_task(worker()) for _ in range(n_workers)]
         await queue.join()
         for w in workers:

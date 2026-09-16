@@ -38,6 +38,31 @@ async def crawl(
     return parser
 
 
+def collect(
+    parser_cls: type[BaseParser],
+    *,
+    params: dict[str, str] | None = None,
+    log: Callable[[str], Awaitable[None]] | None = None,
+) -> list[Any]:
+    """Run a crawl and return the items it emitted.
+
+    For a one-off — a script, a notebook, a test — where writing a sink to get
+    at the items would be ceremony. A long crawl should still stream into a
+    sink rather than pile up in memory.
+    """
+    items: list[Any] = []
+
+    class _Collecting(parser_cls):  # type: ignore[valid-type,misc]
+        async def process_item(self, item: Any) -> None:
+            await super().process_item(item)
+            items.append(item)
+
+    _Collecting.__name__ = parser_cls.__name__
+    _Collecting.__qualname__ = parser_cls.__qualname__
+    run_parser(_Collecting, params=params, log=log)
+    return items
+
+
 def run_parser(
     parser_cls: type[BaseParser],
     *,
