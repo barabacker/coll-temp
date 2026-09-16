@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Callable
 from typing import Any, ClassVar
@@ -12,6 +14,8 @@ from collector.settings import Settings
 from collector.spider.context import ParserContext
 from collector.spider.request import Request
 from collector.spider.response import Response
+
+logger = logging.getLogger(__name__)
 
 
 class BaseParser(ABC):
@@ -34,7 +38,10 @@ class BaseParser(ABC):
         self.ctx = ctx
         self.http = ctx.http
         self.item_count = 0
-        self._errors: list[Exception] = []
+        #: Every request that failed, paired with its exception. ``crawl()``
+        #: re-raises the first one, but a crawl that survived twenty failures
+        #: should be able to show all twenty.
+        self.errors: list[tuple[Request, Exception]] = []
 
     def request(
         self,
@@ -74,21 +81,21 @@ class BaseParser(ABC):
         if self.ctx.log is not None:
             await self.ctx.log(message)
 
-    async def process_item(self, item: Any) -> None:
-        """Handle one emitted item. Counts it; override to persist it.
+    async def process_item(self, item: Any) -> None:  # noqa: B027 — optional hook
+        """Handle one emitted item. A no-op here; override to persist it.
 
         The framework stores nothing: an application overrides this to write the
-        item to ``self.ctx.sink`` (and to keep whatever extra counters it needs),
-        calling ``super().process_item(item)`` to keep ``item_count`` accurate.
+        item to ``self.ctx.sink`` and to keep whatever counters it needs.
+        ``item_count`` is the crawl's own and stays accurate either way.
         """
-        self.item_count += 1
 
     async def crawl(self) -> int:
         """Run producer/consumer crawling with ``concurrency`` workers.
 
         Returns the number of items emitted. The first error collected while
         handling requests is re-raised once all workers have finished, so one bad
-        page neither kills a worker nor passes silently.
+        page neither kills a worker nor passes silently; see ``errors`` for the
+        rest.
         """
         queue: asyncio.Queue[Request] = asyncio.Queue()
         async for req in self.start_requests():
@@ -100,19 +107,29 @@ class BaseParser(ABC):
                 try:
                     await self._handle(req, queue)
                 except Exception as exc:  # noqa: BLE001 — collect, don't kill the worker
-                    self._errors.append(exc)
+                    # Note the request on the exception itself, so the traceback
+                    # raised at the end of the crawl still says which page it was.
+                    exc.add_note(f'while handling {req.method} {req.url}')
+                    logger.warning('crawl.error %s %s %r', req.method, req.url, exc)
+                    self.errors.append((req, exc))
                 finally:
                     queue.task_done()
 
         n_workers = read_concurrency(self.ctx.params, self.settings.concurrency)
         workers = [asyncio.create_task(worker()) for _ in range(n_workers)]
-        await queue.join()
-        for w in workers:
-            w.cancel()
-        await asyncio.gather(*workers, return_exceptions=True)
+        try:
+            await queue.join()
+        finally:
+            # In a finally because a crawl can also end by being cancelled from
+            # the outside, and workers left running would outlive the session
+            # they hold.
+            for w in workers:
+                w.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await asyncio.gather(*workers, return_exceptions=True)
 
-        if self._errors:
-            raise self._errors[0]
+        if self.errors:
+            raise self.errors[0][1]
         return self.item_count
 
     async def _handle(self, req: Request, queue: asyncio.Queue[Request]) -> None:
@@ -123,4 +140,7 @@ class BaseParser(ABC):
             if isinstance(result, Request):
                 queue.put_nowait(result)
             else:
+                # Counted here rather than in process_item: an override that
+                # forgets super() must not silently corrupt the crawl's count.
+                self.item_count += 1
                 await self.process_item(result)

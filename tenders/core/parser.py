@@ -27,7 +27,7 @@ class LotParser(BaseParser):
         self.changed_item_count = 0
 
     async def process_item(self, item: Lot) -> None:
-        """Count lots and, if a sink is configured, persist them."""
+        """Persist a lot, if a sink is configured, and tally the outcome."""
         await super().process_item(item)
         if self.ctx.sink is not None:
             status = await self.ctx.sink.save(item)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import pytest
@@ -165,3 +166,93 @@ async def test_settings_concurrency_is_the_default_and_params_win(ctx_factory):
 
     ctx, _ = ctx_factory(FakeHttp(), params={'concurrency': '2'})
     assert await _Parallel(ctx).crawl() == 2
+
+
+async def test_every_error_is_collected_with_its_request(ctx_factory):
+    class _Failing(BaseParser):
+        name = 'failing_all'
+        start_urls = [PAGE_1, PAGE_2]
+
+        async def parse(self, response: Any):
+            raise ValueError(f'bad {response.request.url}')
+            yield  # pragma: no cover - unreachable, keeps this a generator
+
+    ctx, _ = ctx_factory(FakeHttp())
+    parser = _Failing(ctx)
+
+    with pytest.raises(ValueError):
+        await parser.crawl()
+
+    assert len(parser.errors) == 2
+    assert {req.url for req, _ in parser.errors} == {PAGE_1, PAGE_2}
+    assert all(isinstance(exc, ValueError) for _, exc in parser.errors)
+
+
+async def test_the_reraised_error_carries_the_failing_url(ctx_factory):
+    class _Failing(BaseParser):
+        name = 'failing_note'
+        start_urls = [PAGE_1]
+
+        async def parse(self, response: Any):
+            raise ValueError('boom')
+            yield  # pragma: no cover - unreachable, keeps this a generator
+
+    ctx, _ = ctx_factory(FakeHttp())
+
+    with pytest.raises(ValueError) as excinfo:
+        await _Failing(ctx).crawl()
+
+    assert f'while handling GET {PAGE_1}' in excinfo.value.__notes__
+
+
+async def test_errors_are_logged_as_they_happen(ctx_factory, caplog):
+    """A long crawl must not stay silent until it ends."""
+
+    class _Failing(BaseParser):
+        name = 'failing_log'
+        start_urls = [PAGE_1]
+
+        async def parse(self, response: Any):
+            raise ValueError('boom')
+            yield  # pragma: no cover - unreachable, keeps this a generator
+
+    ctx, _ = ctx_factory(FakeHttp())
+    with caplog.at_level('WARNING', logger='collector.spider.parser'), pytest.raises(ValueError):
+        await _Failing(ctx).crawl()
+
+    assert f'crawl.error GET {PAGE_1}' in caplog.text
+
+
+async def test_item_count_survives_an_override_that_forgets_super(ctx_factory):
+    class _Sloppy(_TwoPages):
+        async def process_item(self, item: Any) -> None:
+            pass  # no super() call
+
+    ctx, _ = ctx_factory(FakeHttp())
+    parser = _Sloppy(ctx)
+    assert await parser.crawl() == 2
+    assert parser.item_count == 2
+
+
+async def test_cancelling_a_crawl_leaves_no_workers_behind(ctx_factory):
+    """Workers outliving the crawl would keep the HTTP session alive."""
+
+    class _SlowHttp(FakeHttp):
+        async def request(self, method: str, url: str, **kwargs: Any) -> Any:
+            await asyncio.sleep(10)
+            raise AssertionError('never reached')  # pragma: no cover
+
+    ctx, _ = ctx_factory(_SlowHttp())
+    parser = _TwoPages(ctx)
+
+    task = asyncio.create_task(parser.crawl())
+    await asyncio.sleep(0)
+    before = len(asyncio.all_tasks())
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    await asyncio.sleep(0)
+
+    remaining = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+    assert remaining == []
+    assert before > 1  # the workers really had started

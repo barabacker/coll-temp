@@ -19,10 +19,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Response.json()`, `Response.urljoin()`, `Response.follow()`.
 - `collect(parser_cls)` — run a crawl and get the items back as a list.
 
+### Fixed
+
+- Cancelling a crawl left its workers running (and the HTTP session with them);
+  they are now cancelled from a `finally`.
+- Errors were collected silently and only the first one ever surfaced, without
+  saying which page failed. Each is now logged as it happens, annotated with its
+  request, and kept in `parser.errors` as `(request, exception)`.
+
 ### Changed
 
 - **Breaking**: `concurrency`, `EXTRA_CA_CERT`, `SKIP_TLS_VERIFY` and
   `RESPONSE_HOOKS` move into `settings = Settings(...)`.
+- `item_count` is incremented by the crawl rather than by `process_item`, so an
+  override that forgets `super()` no longer corrupts it.
 - Retries are an explicit loop in `HttpClient.request` rather than a `tenacity`
   decorator, which is what lets one budget cover both failure modes.
 
