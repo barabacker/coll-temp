@@ -1,0 +1,58 @@
+[project]
+name = "collector-framework"
+version = "0.1.0"
+description = "A tiny async scraping framework: Spider-style parsers, curl_cffi HTTP with middleware, and a parser registry."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "barabacker" }]
+keywords = ["scraping", "crawler", "spider", "async", "curl-cffi"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Internet :: WWW/HTTP",
+    "Typing :: Typed",
+]
+dependencies = [
+    "certifi>=2024.2.2",
+    "curl-cffi>=0.7",
+    "parsel>=1.9",
+    "tenacity>=8.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/barabacker/collector-framework"
+Issues = "https://github.com/barabacker/collector-framework/issues"
+
+[dependency-groups]
+dev = ["pytest", "pytest-asyncio", "ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/collector"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.lint.isort]
+known-first-party = ["collector"]
