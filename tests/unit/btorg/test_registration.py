@@ -20,4 +20,4 @@ def test_base_url_derived():
 
 
 def test_no_response_hooks():
-    assert get_parser('atctrade').RESPONSE_HOOKS == ()
+    assert get_parser('atctrade').settings.response_hooks == ()

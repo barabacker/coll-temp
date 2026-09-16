@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from typing import Any, ClassVar
-from urllib.parse import urljoin
 
 from collector import Request, Response
 
@@ -91,8 +90,8 @@ class DiveParser(LotParser):
             if not dive_url or trade_key in seen:
                 continue
             seen.add(trade_key)
-            yield self.request(
-                urljoin(response.request.url, str(dive_url)),
+            yield response.follow(
+                str(dive_url),
                 callback=self.parse_lots_page,
                 metadata={'trade': trade},
                 headers=self.DIVE_HEADERS,

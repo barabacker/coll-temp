@@ -21,4 +21,4 @@ def test_base_url_derived():
 
 def test_no_response_hooks():
     cls = get_parser('trade_alliance')
-    assert cls.RESPONSE_HOOKS == ()
+    assert cls.settings.response_hooks == ()

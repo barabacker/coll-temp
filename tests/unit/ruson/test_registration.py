@@ -24,4 +24,4 @@ def test_base_url_tradelist_variant():
 
 
 def test_no_response_hooks():
-    assert get_parser('nistp').RESPONSE_HOOKS == ()
+    assert get_parser('nistp').settings.response_hooks == ()

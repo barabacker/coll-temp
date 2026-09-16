@@ -31,17 +31,21 @@ def test_every_platform_uses_a_known_engine():
 
 def test_per_site_overrides_are_applied():
     assert get_parser('sistematorg').BASE_URL == 'https://sistematorg.com/tradelist.php'
-    assert get_parser('arbbitlot').SKIP_TLS_VERIFY is True
-    assert get_parser('meta_invest').EXTRA_CA_CERT == (
+    assert get_parser('arbbitlot').settings.skip_tls_verify is True
+    assert get_parser('meta_invest').settings.extra_ca_cert == (
         'certs/meta_invest_globalsign_gcc_r3_dv_tls_ca_2020.pem'
     )
     # untouched sites keep the engine defaults
-    assert get_parser('centerr').SKIP_TLS_VERIFY is False
-    assert get_parser('centerr').EXTRA_CA_CERT is None
+    assert get_parser('centerr').settings.skip_tls_verify is False
+    assert get_parser('centerr').settings.extra_ca_cert is None
+    # an override must not drop what the engine declares
+    assert get_parser('arbbitlot').settings.response_hooks == (
+        get_parser('centerr').settings.response_hooks
+    )
 
 
 def test_generated_class_module_points_at_its_engine():
-    # http.factory resolves EXTRA_CA_CERT relative to the class's module file,
+    # http.factory resolves settings.extra_ca_cert relative to the class's module,
     # so a generated class must report its engine package, not tenders.platforms.
     cls = get_parser('meta_invest')
     assert cls.__module__ == 'tenders.sources.fogsoft.base'

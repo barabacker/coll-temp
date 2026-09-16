@@ -4,10 +4,9 @@ ASP.NET WebForms + UpdatePanel, ViewState pagination, lot listing."""
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from typing import TYPE_CHECKING, Any, ClassVar
-from urllib.parse import urljoin
+from typing import Any, ClassVar
 
-from collector import Request, Response
+from collector import Request, Response, Settings
 
 from tenders.core.lot import Lot
 from tenders.core.parser import LotParser
@@ -31,9 +30,6 @@ from tenders.sources.fogsoft.parsing.viewstate import (
     extract_tokens,
 )
 
-if TYPE_CHECKING:
-    from collector.http.middleware import ResponseHook
-
 
 class TenderFogsoft(LotParser):
     """Base parser for iTender (Fogsoft) sites.
@@ -49,16 +45,9 @@ class TenderFogsoft(LotParser):
     DOMAIN: ClassVar[str]
     LISTING_PATH: ClassVar[str] = 'public/purchases-all/'
     BASE_URL: ClassVar[str]
-    # Path (relative to this package) to a PEM file with an extra intermediate
-    # certificate the site fails to send in its TLS handshake (see certs/*.pem).
-    # None — use the normal CA bundle.
-    EXTRA_CA_CERT: ClassVar[str | None] = None
-    # True — disable TLS verification entirely (verify=False). Only for sites
-    # whose certificate is objectively broken on their side (e.g. expired) and
-    # no CA bundle can fix it (see ArbBitLotParser). Disables MITM protection
-    # for requests to this site.
-    SKIP_TLS_VERIFY: ClassVar[bool] = False
-    RESPONSE_HOOKS: ClassVar[tuple[ResponseHook, ...]] = (solve_inprotect,)
+    # Per-site TLS quirks (extra_ca_cert, skip_tls_verify) are filled in from
+    # platforms.toml; see platforms.build_parser.
+    settings = Settings(response_hooks=(solve_inprotect,))
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -93,8 +82,8 @@ class TenderFogsoft(LotParser):
                 and existing_fingerprints.get(str(lot_id)) != lot_fingerprint(item)
             )
             if needs_dive and item.get('lot_url'):
-                yield self.request(
-                    urljoin(response.request.url, str(item['lot_url'])),
+                yield response.follow(
+                    str(item['lot_url']),
                     callback=self.parse_detail,
                     metadata={'item': item},
                 )

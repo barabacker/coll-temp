@@ -1,6 +1,6 @@
 # Plan: collector v0.2 — settings, retry policy, parser ergonomics
 
-Status: in progress
+Status: done (framework v0.2.0 + tenders migrated)
 Branch: `claude/clever-volta-jlw1br`
 
 ## Decisions (agreed with the owner)

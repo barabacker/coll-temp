@@ -1,4 +1,4 @@
-"""Parsers declare their own HTTP specifics via class attributes."""
+"""Parsers declare their own HTTP specifics through ``settings``."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from tenders.sources.fogsoft.inprotect import solve_inprotect
 
 
 def test_base_parser_defaults():
-    assert BaseParser.RESPONSE_HOOKS == ()
-    assert BaseParser.EXTRA_CA_CERT is None
-    assert BaseParser.SKIP_TLS_VERIFY is False
+    assert BaseParser.settings.response_hooks == ()
+    assert BaseParser.settings.extra_ca_cert is None
+    assert BaseParser.settings.skip_tls_verify is False
 
 
 def test_fogsoft_declares_inprotect_hook():
-    assert TenderFogsoft.RESPONSE_HOOKS == (solve_inprotect,)
+    assert TenderFogsoft.settings.response_hooks == (solve_inprotect,)

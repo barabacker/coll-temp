@@ -9,6 +9,7 @@ and registers a parser class per enabled entry — replacing the hand-written
 from __future__ import annotations
 
 import tomllib
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -29,11 +30,9 @@ ENGINES: dict[str, type[BaseParser]] = {
 }
 
 # TOML field -> parser class attribute. Absent fields keep the engine default.
-_OPTIONAL_ATTRS = {
-    'listing_path': 'LISTING_PATH',
-    'extra_ca_cert': 'EXTRA_CA_CERT',
-    'skip_tls_verify': 'SKIP_TLS_VERIFY',
-}
+_OPTIONAL_ATTRS = {'listing_path': 'LISTING_PATH'}
+# TOML field -> Settings field. Absent fields keep the engine's setting.
+_OPTIONAL_SETTINGS = ('extra_ca_cert', 'skip_tls_verify')
 
 
 def _class_name(key: str) -> str:
@@ -55,12 +54,16 @@ def build_parser(spec: dict[str, Any]) -> type[BaseParser]:
         if field in spec:
             attrs[attr] = spec[field]
 
+    overrides = {field: spec[field] for field in _OPTIONAL_SETTINGS if field in spec}
+    if overrides:
+        attrs['settings'] = replace(base.settings, **overrides)
+
     title = spec.get('title', key)
     domain = spec['domain']
     attrs['__doc__'] = f'{title} — {domain}.'
-    # ``http.factory`` resolves EXTRA_CA_CERT relative to the class's module
-    # file, so point the generated class at its engine package (where certs/
-    # lives) rather than at this module.
+    # ``http.factory`` resolves ``settings.extra_ca_cert`` relative to the
+    # class's module file, so point the generated class at its engine package
+    # (where certs/ lives) rather than at this module.
     attrs['__module__'] = base.__module__
 
     return type(_class_name(key), (base,), attrs)
